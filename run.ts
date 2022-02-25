@@ -244,6 +244,9 @@ const server = serve(
         return ctx.respond(err.message, { status: 400 }).catch(logErr);
       }
     }),
+    get("/api/self/hash", (ctx) => {
+      return ctx.respond(ctx.request.headers.get("X-Forwarded-For"));
+    }),
     get("/tooltip.js", async (ctx) => {
       const file = await Deno.open("tooltip.js");
       await ctx.respond(file.readable, {
