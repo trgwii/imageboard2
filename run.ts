@@ -8,7 +8,7 @@ import {
   serve,
   trust,
 } from "./deps.ts";
-import { Threads } from "./db.ts";
+import { Threads } from "./db/Thread0.ts";
 import { markdown } from "./md.ts";
 
 const logErr = (err: Error) => console.error(err.message);

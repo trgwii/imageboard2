@@ -1,3 +1,5 @@
+import type { IThread } from "./IThread0.d.ts";
+
 function assert(ok: boolean, msg: string) {
   if (!ok) throw new Error(msg);
 }
@@ -74,18 +76,18 @@ class Stream {
   }
 }
 
-export class Threads {
-  #dir = "threads";
-  #id!: number;
-  #init: Promise<void>;
+export class Threads implements IThread {
+  dir = "threads/v0";
+  id!: number;
+  init: Promise<void>;
   constructor() {
-    this.#init = Deno.mkdir(this.#dir, { recursive: true }).then(async () => {
-      this.#id = await this.#findAvailableId();
+    this.init = Deno.mkdir(this.dir, { recursive: true }).then(async () => {
+      this.id = await this.findAvailableId();
     });
   }
-  async #findAvailableId() {
+  async findAvailableId() {
     let max = 0;
-    for await (const d of Deno.readDir(this.#dir)) {
+    for await (const d of Deno.readDir(this.dir)) {
       const id = Number(d.name);
       if (!Number.isNaN(id) && id > max) max = id;
     }
@@ -93,8 +95,8 @@ export class Threads {
   }
 
   async loadTitle(id: number) {
-    await this.#init;
-    const file = await Deno.open(`${this.#dir}/${id}`);
+    await this.init;
+    const file = await Deno.open(`${this.dir}/${id}`);
     const stream = new Stream(file);
     const result = {
       title: await stream.readShortString(),
@@ -105,17 +107,17 @@ export class Threads {
   }
 
   async lastModified(id: number) {
-    await this.#init;
-    const { mtime } = await Deno.stat(`${this.#dir}/${id}`);
+    await this.init;
+    const { mtime } = await Deno.stat(`${this.dir}/${id}`);
     return mtime!;
   }
 
   async recent(max: number) {
     const recents: { id: number; birthtime: number; mtime: number }[] = [];
-    await this.#init;
-    for await (const d of Deno.readDir(this.#dir)) {
+    await this.init;
+    for await (const d of Deno.readDir(this.dir)) {
       const id = Number(d.name);
-      const { birthtime, mtime } = await Deno.stat(`${this.#dir}/${id}`);
+      const { birthtime, mtime } = await Deno.stat(`${this.dir}/${id}`);
       if (!birthtime || !mtime) {
         continue;
       }
@@ -155,8 +157,8 @@ export class Threads {
     assert(titleBuf.byteLength < 256, "Title too long");
     const textBuf = new TextEncoder().encode(text);
     assert(textBuf.byteLength < 65536, "Text too long");
-    await this.#init;
-    const file = await Deno.open(`${this.#dir}/${this.#id}`, {
+    await this.init;
+    const file = await Deno.open(`${this.dir}/${this.id}`, {
       createNew: true,
       write: true,
     });
@@ -165,20 +167,20 @@ export class Threads {
     await stream.writeShortString(hash);
     await stream.writeLongString(text);
     file.close();
-    return this.#id++;
+    return this.id++;
   }
   async post(id: number, replyText: string, hash: string) {
     const replyTextBuf = new TextEncoder().encode(replyText);
     assert(replyTextBuf.byteLength < 65536, "Text too long");
-    await this.#init;
-    const file = await Deno.open(`${this.#dir}/${id}`, { append: true });
+    await this.init;
+    const file = await Deno.open(`${this.dir}/${id}`, { append: true });
     const stream = new Stream(file);
     await stream.writeShortString(hash);
     await stream.writeLongString(replyText);
   }
   async load(id: number) {
-    await this.#init;
-    const file = await Deno.open(`${this.#dir}/${id}`);
+    await this.init;
+    const file = await Deno.open(`${this.dir}/${id}`);
     const stream = new Stream(file);
     const result = {
       title: await stream.readShortString(),
