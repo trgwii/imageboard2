@@ -121,7 +121,14 @@ const server = serve(
           return ctx.respond("Expired thread").catch(logErr);
         }
         if (id in cache) return ctx.render(cache[id].data).catch(logErr);
-        const { title: tit, text, hash, replies } = await t.load(id);
+        const {
+          title: tit,
+          text,
+          hash,
+          replies,
+          created,
+          modified,
+        } = await t.load(id);
         const vdom = html(
           head(
             meta({ charset: "utf-8" }),
@@ -135,7 +142,17 @@ const server = serve(
           body(
             a({ href: "/" }, "Back to main page"),
             h1(tit),
-            h6(hash),
+            h6(
+              created.toISOString()
+                .replace("T", " ")
+                .replace(/:\d{2}\..+/, ""),
+              " | ",
+              modified.toISOString()
+                .replace("T", " ")
+                .replace(/:\d{2}\..+/, ""),
+              " | ",
+              hash,
+            ),
             article(trust(await markdown(text))),
             ...(await Promise.all(replies.map(async (r) => [
               hr(),
