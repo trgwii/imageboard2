@@ -82,6 +82,7 @@ export const markdown = async (text: string) => {
         "hgroup",
         "hr",
         "i",
+        "img",
         "kbd",
         "li",
         "main",
@@ -122,6 +123,7 @@ export const markdown = async (text: string) => {
         a: ["href"],
         span: ["style"],
         code: ["class"],
+        img: ["src"],
         pre: ["shiki", "twoslash", "lsp"],
         "data-lsp": ["lsp"],
       },
@@ -130,6 +132,9 @@ export const markdown = async (text: string) => {
         span: {
           color: [/.+/],
         },
+      },
+      allowedSchemesByTag: {
+        img: ["data", "http", "https"],
       },
     },
   );

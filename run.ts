@@ -113,15 +113,14 @@ const server = serve(
       if (Number.isNaN(id)) {
         return ctx.respond("Missing thread").catch(logErr);
       }
-      if (
-        (await t.lastModified(id)).getTime() <
-          Date.now() - 7 * 24 * 60 * 60 * 1000
-      ) {
-        return ctx.respond("Expired thread").catch(logErr);
-      }
       try {
+        if (
+          (await t.lastModified(id)).getTime() <
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+        ) {
+          return ctx.respond("Expired thread").catch(logErr);
+        }
         if (id in cache) return ctx.render(cache[id].data).catch(logErr);
-
         const { title: tit, text, hash, replies } = await t.load(id);
         const vdom = html(
           head(
@@ -142,7 +141,7 @@ const server = serve(
               hr(),
               article(h6(r.hash), trust(await markdown(r.text))),
             ]))).flat(),
-            form(
+            (await t.size(id) < 1024 * 1024) && form(
               { method: "POST", action: "/api/thread/post" },
               input({ type: "hidden", name: "id", value: String(id) }),
               section(
@@ -167,6 +166,11 @@ const server = serve(
       }
     }),
     post("/api/thread/create", async (ctx) => {
+      if (
+        Number(ctx.request.headers.get("Content-Length")!) > 12 + 256 + 65536
+      ) {
+        return ctx.respond("Thread contents too long");
+      }
       const fd = await ctx.request.formData();
       const title = fd.get("title")!;
       if (!title || typeof title !== "string") {
@@ -195,6 +199,11 @@ const server = serve(
       }
     }),
     post("/api/thread/post", async (ctx) => {
+      if (
+        Number(ctx.request.headers.get("Content-Length")!) > 9 + 256 + 65536
+      ) {
+        return ctx.respond("Reply contents too long");
+      }
       const fd = await ctx.request.formData();
       const id = Number(fd.get("id")!);
       if (Number.isNaN(id)) {
@@ -209,6 +218,9 @@ const server = serve(
       }
 
       try {
+        if (await t.size(id) > 1024 * 1024) {
+          return ctx.respond("Thread is full", { status: 400 }).catch(logErr);
+        }
         const hash = encode(crypto.getRandomValues(new Uint8Array(12)), {
           standard: "Z85",
         });

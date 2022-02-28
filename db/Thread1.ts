@@ -192,6 +192,11 @@ export class Threads implements IThread {
       { id, mtime: modified.getTime() },
     ]);
   }
+
+  async size(id: number) {
+    await this.init;
+    return (await Deno.stat(`${this.dir}/${id}`)).size;
+  }
   async load(id: number) {
     await this.init;
     const file = await Deno.open(`${this.dir}/${id}`);
