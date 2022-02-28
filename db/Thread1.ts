@@ -134,30 +134,40 @@ export class Threads implements IThread {
       `${this.dir}/${id}`,
       { read: true, write: true },
     );
-    let offset = 4 + s.created.size;
-    await file.seek(offset, Start);
-    offset = await file.seek(
-      offset + await s.modified.write(new Date(), file),
-      Start,
-    );
+    // Skip version + checksum + created time
+    await file.seek(4 + s.created.size, Current);
+
+    // Update modtime
+    await s.modified.write(new Date(), file);
+
+    // Skip thread hash
     const h = await s.hash.field.length.read(file);
-    offset = await file.seek(offset + h.bytesRead + h.value, Start);
+    await file.seek(h.value, Current);
+
+    // Skip thread title
     const ti = await s.title.field.length.read(file);
-    offset = await file.seek(offset + ti.bytesRead + ti.value, Start);
+    await file.seek(ti.value, Current);
+
+    // Skip thread text
     const te = await s.text.field.length.read(file);
-    offset = await file.seek(offset + te.bytesRead + te.value, Start);
+    await file.seek(te.value, Current);
+
+    // Update reply count
     const l = await s.replies.length.read(file);
-    offset = await file.seek(offset, Start);
+    await file.seek(-l.bytesRead, Current);
     await s.replies.length.write(l.value + 1, file);
-    offset = await file.seek(offset + l.bytesRead, Start);
+
+    // Skip replies
     for (let i = 0; i < l.value; i++) {
-      const rl = await s.replies.field.schema.hash.field.length.read(file);
-      offset = await file.seek(offset + rl.bytesRead + rl.value, Start);
+      const hl = await s.replies.field.schema.hash.field.length.read(file);
+      await file.seek(hl.value, Current);
+      const tl = await s.replies.field.schema.text.field.length.read(file);
+      await file.seek(tl.value, Current);
     }
+
+    // Write reply
+    await s.replies.field.write({ hash, text: replyText }, file);
     file.close();
-    const append = await Deno.open(`${this.dir}/${id}`, { append: true });
-    await s.replies.field.write({ hash, text: replyText }, append);
-    append.close();
   }
   async load(id: number) {
     await this.init;
