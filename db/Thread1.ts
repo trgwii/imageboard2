@@ -1,8 +1,8 @@
-import { Buf } from "https://raw.githubusercontent.com/trgwii/RoryBufs/02832e14f690a7398539b8aebfd47e1a30a3828a/ts/mod.ts";
-import { DateTime } from "https://raw.githubusercontent.com/trgwii/RoryBufs/02832e14f690a7398539b8aebfd47e1a30a3828a/ts/fields/DateTime.ts";
-import { ArrayList } from "https://raw.githubusercontent.com/trgwii/RoryBufs/02832e14f690a7398539b8aebfd47e1a30a3828a/ts/fields/ArrayList.ts";
-import { Text } from "https://raw.githubusercontent.com/trgwii/RoryBufs/02832e14f690a7398539b8aebfd47e1a30a3828a/ts/fields/Text.ts";
-import { Struct } from "https://raw.githubusercontent.com/trgwii/RoryBufs/02832e14f690a7398539b8aebfd47e1a30a3828a/ts/fields/Struct.ts";
+import { Buf } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/mod.ts";
+import { DateTime } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/fields/DateTime.ts";
+import { ArrayList } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/fields/ArrayList.ts";
+import { Text } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/fields/Text.ts";
+import { Struct } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/fields/Struct.ts";
 import { IThread } from "./IThread0.d.ts";
 
 export const ThreadBuf = new Buf({
@@ -18,6 +18,8 @@ export const ThreadBuf = new Buf({
     }),
   ),
 });
+
+const { Start, Current } = Deno.SeekMode;
 
 export class Threads implements IThread {
   dir = "threads/v1";
@@ -48,10 +50,10 @@ export class Threads implements IThread {
     const file = await Deno.open(`${this.dir}/${id}`);
     const s = ThreadBuf.schema;
     const offset = 4 + s.created.size + s.modified.size;
-    await file.seek(offset, Deno.SeekMode.Current);
+    await file.seek(offset, Current);
     const result = {
-      hash: await s.hash.read(file),
-      title: await s.title.read(file),
+      hash: (await s.hash.read(file)).value,
+      title: (await s.title.read(file)).value,
     };
     file.close();
     return result;
@@ -61,8 +63,8 @@ export class Threads implements IThread {
     const file = await Deno.open(`${this.dir}/${id}`);
     const s = ThreadBuf.schema;
     const offset = 4 + s.created.size;
-    await file.seek(offset, Deno.SeekMode.Current);
-    const result = await s.modified.read(file);
+    await file.seek(offset, Current);
+    const result = (await s.modified.read(file)).value;
     file.close();
     return result;
   }
@@ -70,13 +72,13 @@ export class Threads implements IThread {
     await this.init;
     const s = ThreadBuf.schema;
     const file = await Deno.open(`${this.dir}/${id}`);
-    await file.seek(4, Deno.SeekMode.Current);
+    await file.seek(4, Current);
     const result = {
       id,
-      birthtime: await s.created.read(file),
-      mtime: await s.modified.read(file),
-      hash: await s.hash.read(file),
-      title: await s.title.read(file),
+      birthtime: (await s.created.read(file)).value,
+      mtime: (await s.modified.read(file)).value,
+      hash: (await s.hash.read(file)).value,
+      title: (await s.title.read(file)).value,
     };
     file.close();
     return result;
@@ -101,10 +103,12 @@ export class Threads implements IThread {
         recents.push({ id, mtime });
       }
     }
-    return Promise.all(
+    const result = await Promise.all(
       recents.sort((a, b) => a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0)
         .map((r) => this.loadSummary(r.id)),
     );
+    // this.#recent = result;
+    return result;
   }
   async create(title: string, text: string, hash: string) {
     await this.init;
@@ -131,30 +135,24 @@ export class Threads implements IThread {
       { read: true, write: true },
     );
     let offset = 4 + s.created.size;
-    await file.seek(offset, Deno.SeekMode.Start);
+    await file.seek(offset, Start);
     offset = await file.seek(
       offset + await s.modified.write(new Date(), file),
-      Deno.SeekMode.Start,
+      Start,
     );
-    offset = await file.seek(
-      offset + 4 + await s.hash.field.length.read(file),
-      Deno.SeekMode.Start,
-    );
-    offset = await file.seek(
-      offset + 4 + await s.title.field.length.read(file),
-      Deno.SeekMode.Start,
-    );
-    offset = await file.seek(
-      offset + 4 + await s.text.field.length.read(file),
-      Deno.SeekMode.Start,
-    );
-    const length = await s.replies.length.read(file);
-    offset = await file.seek(offset, Deno.SeekMode.Start);
-    await s.replies.length.write(length + 1, file);
-    offset = await file.seek(offset + 4, Deno.SeekMode.Start);
-    for (let i = 0; i < length; i++) {
-      const length = await s.replies.field.schema.hash.field.length.read(file);
-      offset = await file.seek(offset + 4 + length, Deno.SeekMode.Start);
+    const h = await s.hash.field.length.read(file);
+    offset = await file.seek(offset + h.bytesRead + h.value, Start);
+    const ti = await s.title.field.length.read(file);
+    offset = await file.seek(offset + ti.bytesRead + ti.value, Start);
+    const te = await s.text.field.length.read(file);
+    offset = await file.seek(offset + te.bytesRead + te.value, Start);
+    const l = await s.replies.length.read(file);
+    offset = await file.seek(offset, Start);
+    await s.replies.length.write(l.value + 1, file);
+    offset = await file.seek(offset + l.bytesRead, Start);
+    for (let i = 0; i < l.value; i++) {
+      const rl = await s.replies.field.schema.hash.field.length.read(file);
+      offset = await file.seek(offset + rl.bytesRead + rl.value, Start);
     }
     file.close();
     const append = await Deno.open(`${this.dir}/${id}`, { append: true });
@@ -166,6 +164,6 @@ export class Threads implements IThread {
     const file = await Deno.open(`${this.dir}/${id}`);
     const result = await ThreadBuf.read(file);
     file.close();
-    return result;
+    return result.value;
   }
 }
