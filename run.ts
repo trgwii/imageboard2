@@ -37,31 +37,15 @@ const t = new Threads();
 
 const cache: Record<string, { created: Date; data: HyperNode }> = {};
 
-setInterval(() => {
-  for (const [id, { created }] of Object.entries(cache)) {
-    if (created.getTime() < Date.now() - 15 * 60 * 1000) {
-      delete cache[id];
-    }
-  }
-}, 60_000);
-
-// const markdown = (text: string) =>
-//   text
-//     .replaceAll("&", "&amp;")
-//     .replaceAll("<", "&lt;")
-//     .replaceAll(">", "&gt;")
-//     .replace(
-//       /\b(https?:\/\/.+?)("|\s|\))/g,
-//       (_, m: string, rest: string) =>
-//         renderHTML(a({ href: String(m) }, String(m))) + rest,
-//     )
-//     .replace(/\*\*(.+?)\*\*/g, (_, m: string) => renderHTML(strong(m)))
-//     .replace(/__(.+?)__/g, (_, m: string) => renderHTML(strong(m)))
-//     .replace(/\*(.+?)\*/g, (_, m: string) => renderHTML(em(m)))
-//     .replace(/_(.+?)_/g, (_, m: string) => renderHTML(em(m)))
-//     .replace(/```(.+?)```/gms, (_, m: string) => renderHTML(pre(code(m))))
-//     .replace(/`(.+?)`/g, (_, m: string) => renderHTML(pre(m)))
-//     .replaceAll("\n", renderHTML(br()));
+const removeOldest = () => {
+  const oldestTime = Math.min(
+    ...Object.values(cache).map((x) => x.created.getTime()),
+  );
+  const id = Object.entries(cache).find(([, v]) =>
+    v.created.getTime() === oldestTime
+  )?.[0];
+  if (id) delete cache[id];
+};
 
 const server = serve(
   { port: 8080, hostname: "127.0.0.1" },
@@ -176,6 +160,7 @@ const server = serve(
           ),
         );
         cache[id] = { created: new Date(), data: vdom };
+        while (Object.keys(cache).length > 100) removeOldest();
         return ctx.render(vdom).catch(logErr);
       } catch (err) {
         return ctx.respond(err.message, { status: 400 }).catch(logErr);

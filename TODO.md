@@ -9,3 +9,4 @@
 - Browser notifications
 - Atom / RSS
 - Pinned threads
+- Images

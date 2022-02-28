@@ -19,7 +19,7 @@ export const ThreadBuf = new Buf({
   ),
 });
 
-const { Start, Current } = Deno.SeekMode;
+const { Current } = Deno.SeekMode;
 
 export class Threads implements IThread {
   dir = "threads/v1";
@@ -31,6 +31,7 @@ export class Threads implements IThread {
     birthtime: Date;
     mtime: Date;
   }[];
+  #recentMax = 10;
   init: Promise<void>;
   constructor() {
     this.init = Deno.mkdir(this.dir, { recursive: true }).then(async () => {
@@ -83,7 +84,20 @@ export class Threads implements IThread {
     file.close();
     return result;
   }
+  async updateRecents(newRecents: { id: number; mtime: number }[]) {
+    console.log(newRecents);
+    const sorted = newRecents
+      .sort((a, b) => a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0);
+    while (sorted.length > this.#recentMax) sorted.pop();
+    const ids = new Set<number>();
+    return this.#recent = await Promise.all(
+      sorted
+        .filter((r) => ids.has(r.id) ? false : (ids.add(r.id), true))
+        .map((r) => this.loadSummary(r.id)),
+    );
+  }
   async recent(max: number) {
+    this.#recentMax = max;
     if (this.#recent) return this.#recent;
     const recents: { id: number; mtime: number }[] = [];
     for await (const d of Deno.readDir(this.dir)) {
@@ -103,12 +117,7 @@ export class Threads implements IThread {
         recents.push({ id, mtime });
       }
     }
-    const result = await Promise.all(
-      recents.sort((a, b) => a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0)
-        .map((r) => this.loadSummary(r.id)),
-    );
-    // this.#recent = result;
-    return result;
+    return this.updateRecents(recents);
   }
   async create(title: string, text: string, hash: string) {
     await this.init;
@@ -116,15 +125,21 @@ export class Threads implements IThread {
       `${this.dir}/${this.id}`,
       { createNew: true, write: true },
     );
+    const modified = new Date();
     await ThreadBuf.write({
       created: new Date(),
-      modified: new Date(),
+      modified,
       hash,
       title,
       text,
       replies: [],
     }, file);
     file.close();
+    await this.updateRecents([
+      ...this.#recent
+        ?.map((x) => ({ id: x.id, mtime: x.mtime.getTime() })) ?? [],
+      { id: this.id, mtime: modified.getTime() },
+    ]);
     return this.id++;
   }
   async post(id: number, replyText: string, hash: string) {
@@ -137,8 +152,10 @@ export class Threads implements IThread {
     // Skip version + checksum + created time
     await file.seek(4 + s.created.size, Current);
 
+    const modified = new Date();
+
     // Update modtime
-    await s.modified.write(new Date(), file);
+    await s.modified.write(modified, file);
 
     // Skip thread hash
     const h = await s.hash.field.length.read(file);
@@ -168,6 +185,13 @@ export class Threads implements IThread {
     // Write reply
     await s.replies.field.write({ hash, text: replyText }, file);
     file.close();
+
+    await this.updateRecents([
+      ...this.#recent
+        ?.filter((x) => x.id !== id)
+        ?.map((x) => ({ id: x.id, mtime: x.mtime.getTime() })) ?? [],
+      { id, mtime: modified.getTime() },
+    ]);
   }
   async load(id: number) {
     await this.init;
