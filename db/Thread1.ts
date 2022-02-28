@@ -128,27 +128,38 @@ export class Threads implements IThread {
     const s = ThreadBuf.schema;
     const file = await Deno.open(
       `${this.dir}/${id}`,
-      { read: true, write: true, append: true },
+      { read: true, write: true },
     );
     let offset = 4 + s.created.size;
     await file.seek(offset, Deno.SeekMode.Start);
-    offset += await s.modified.write(new Date(), file);
-    console.log(offset);
-    offset += await s.hash.field.length.read(file);
-    await file.seek(offset, Deno.SeekMode.Start);
-    offset += await s.title.field.length.read(file);
-    await file.seek(offset, Deno.SeekMode.Start);
-    offset += await s.text.field.length.read(file);
-    await file.seek(offset, Deno.SeekMode.Start);
+    offset = await file.seek(
+      offset + await s.modified.write(new Date(), file),
+      Deno.SeekMode.Start,
+    );
+    offset = await file.seek(
+      offset + 4 + await s.hash.field.length.read(file),
+      Deno.SeekMode.Start,
+    );
+    offset = await file.seek(
+      offset + 4 + await s.title.field.length.read(file),
+      Deno.SeekMode.Start,
+    );
+    offset = await file.seek(
+      offset + 4 + await s.text.field.length.read(file),
+      Deno.SeekMode.Start,
+    );
     const length = await s.replies.length.read(file);
-    await file.seek(-s.replies.length.size, Deno.SeekMode.Current);
+    offset = await file.seek(offset, Deno.SeekMode.Start);
     await s.replies.length.write(length + 1, file);
+    offset = await file.seek(offset + 4, Deno.SeekMode.Start);
     for (let i = 0; i < length; i++) {
       const length = await s.replies.field.schema.hash.field.length.read(file);
-      await file.seek(length, Deno.SeekMode.Current);
+      offset = await file.seek(offset + 4 + length, Deno.SeekMode.Start);
     }
-    await s.replies.field.write({ hash, text: replyText }, file);
     file.close();
+    const append = await Deno.open(`${this.dir}/${id}`, { append: true });
+    await s.replies.field.write({ hash, text: replyText }, append);
+    append.close();
   }
   async load(id: number) {
     await this.init;
