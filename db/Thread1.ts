@@ -85,7 +85,6 @@ export class Threads implements IThread {
     return result;
   }
   async updateRecents(newRecents: { id: number; mtime: number }[]) {
-    console.log(newRecents);
     const sorted = newRecents
       .sort((a, b) => a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0);
     while (sorted.length > this.#recentMax) sorted.pop();
