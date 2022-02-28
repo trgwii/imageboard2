@@ -416,6 +416,6 @@ const zigGrammar = {
     }
   } else {
     try { console.log(highlighter.codeToHtml(code, lang?.toLowerCase())); }
-    catch { console.log(highlighter.codeToHtml(code, "text"); }
+    catch { console.log(highlighter.codeToHtml(code, "text")); }
   }
 })();
