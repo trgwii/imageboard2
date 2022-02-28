@@ -235,6 +235,12 @@ const server = serve(
       }
 
       try {
+        if (
+          (await t.lastModified(id)).getTime() <
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+        ) {
+          return ctx.respond("Expired thread").catch(logErr);
+        }
         if (await t.size(id) > 1024 * 1024) {
           return ctx.respond("Thread is full", { status: 400 }).catch(logErr);
         }
