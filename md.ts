@@ -1,16 +1,14 @@
 import { marked, sanitizeHtml, writeAll } from "./deps.ts";
 
 const markedOpts: marked.MarkedOptions = {
+  breaks: true,
+  xhtml: true,
   highlight: (
     code: string,
     lang: string,
     cb: (err: unknown, result?: string) => void,
   ) => {
     (async () => {
-      code = code
-        .replaceAll("&lt;", "<")
-        .replaceAll("&gt;", ">")
-        .replaceAll("&amp;", "&");
       const proc = Deno.run({
         cmd: ["node", "twoslash.node.js", lang ?? "text"],
         stdin: "piped",
@@ -38,10 +36,7 @@ const markedOpts: marked.MarkedOptions = {
 export const markdown = async (text: string) => {
   const result = sanitizeHtml(
     await marked(
-      text
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;"),
+      text,
       markedOpts,
     ),
     {
@@ -138,5 +133,5 @@ export const markdown = async (text: string) => {
       },
     },
   );
-  return result.includes("<table>") ? result : result.replace(/\n+/g, "<br />");
+  return result;
 };
