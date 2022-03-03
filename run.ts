@@ -253,6 +253,51 @@ const server = serve(
         headers: { "Content-Type": "text/plain" },
       }).catch(logErr);
     }),
+    options("/api/thread/recent", (ctx) => {
+      return ctx.respond(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+        },
+      }).catch(logErr);
+    }),
+    get("/api/thread/recent", async (ctx) => {
+      try {
+        return ctx.respond(
+          JSON.stringify({
+            ok: true,
+            thread: (await core.recentThreads()).map((t) => ({
+              id: t.id,
+              created: t.birthtime,
+              modified: t.mtime,
+              hash: t.hash,
+              title: t.title,
+            })),
+          }),
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        ).catch(logErr);
+      } catch (err) {
+        return ctx.respond(
+          JSON.stringify({
+            ok: false,
+            error: err.message,
+          }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        ).catch(logErr);
+      }
+    }),
     get("/api/thread/:id", async (ctx) => {
       try {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);

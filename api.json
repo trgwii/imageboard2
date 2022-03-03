@@ -10,13 +10,79 @@
     }
   },
   "paths": {
+    "/api/thread/recent": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Got recent threads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "threads"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [true] },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "id",
+                          "created",
+                          "modified",
+                          "hash",
+                          "title"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "created": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "modified": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "hash": { "type": "string", "maxLength": 255 },
+                          "title": { "type": "string", "maxLength": 255 }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "error"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [false] },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/thread/{id}": {
       "get": {
         "parameters": [
           {
             "in": "path",
             "name": "id",
-            "example": 4,
             "schema": {
               "type": "integer"
             },
