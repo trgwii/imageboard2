@@ -4,6 +4,7 @@ import { ArrayList } from "https://raw.githubusercontent.com/trgwii/RoryBufs/532
 import { Text } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/fields/Text.ts";
 import { Struct } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/fields/Struct.ts";
 import { IThread } from "./IThread0.d.ts";
+export type { ValueFromSchema } from "https://raw.githubusercontent.com/trgwii/RoryBufs/53263f4c24e09d5b08dd7dea01b508da7fe032e4/ts/utils.ts";
 
 export const ThreadBuf = new Buf({
   created: new DateTime(),
@@ -24,14 +25,6 @@ const { Current } = Deno.SeekMode;
 export class Threads implements IThread {
   dir = "threads/v1";
   id!: number;
-  #recent?: {
-    title: string;
-    hash: string;
-    id: number;
-    birthtime: Date;
-    mtime: Date;
-  }[];
-  #recentMax = 10;
   init: Promise<void>;
   constructor() {
     this.init = Deno.mkdir(this.dir, { recursive: true }).then(async () => {
@@ -84,20 +77,7 @@ export class Threads implements IThread {
     file.close();
     return result;
   }
-  async updateRecents(newRecents: { id: number; mtime: number }[]) {
-    const sorted = newRecents
-      .sort((a, b) => a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0);
-    while (sorted.length > this.#recentMax) sorted.pop();
-    const ids = new Set<number>();
-    return this.#recent = await Promise.all(
-      sorted
-        .filter((r) => ids.has(r.id) ? false : (ids.add(r.id), true))
-        .map((r) => this.loadSummary(r.id)),
-    );
-  }
   async recent(max: number) {
-    this.#recentMax = max;
-    if (this.#recent) return this.#recent;
     const recents: { id: number; mtime: number }[] = [];
     for await (const d of Deno.readDir(this.dir)) {
       const id = Number(d.name);
@@ -116,7 +96,15 @@ export class Threads implements IThread {
         recents.push({ id, mtime });
       }
     }
-    return this.updateRecents(recents);
+    const sorted = recents.sort((a, b) =>
+      a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0
+    );
+    const ids = new Set<number>();
+    return Promise.all(
+      sorted
+        .filter((r) => ids.has(r.id) ? false : (ids.add(r.id), true))
+        .map((r) => this.loadSummary(r.id)),
+    );
   }
   async create(title: string, text: string, hash: string) {
     await this.init;
@@ -134,11 +122,6 @@ export class Threads implements IThread {
       replies: [],
     }, file);
     file.close();
-    await this.updateRecents([
-      ...this.#recent
-        ?.map((x) => ({ id: x.id, mtime: x.mtime.getTime() })) ?? [],
-      { id: this.id, mtime: modified.getTime() },
-    ]);
     return this.id++;
   }
   async post(id: number, replyText: string, hash: string) {
@@ -184,13 +167,6 @@ export class Threads implements IThread {
     // Write reply
     await s.replies.field.write({ hash, text: replyText }, file);
     file.close();
-
-    await this.updateRecents([
-      ...this.#recent
-        ?.filter((x) => x.id !== id)
-        ?.map((x) => ({ id: x.id, mtime: x.mtime.getTime() })) ?? [],
-      { id, mtime: modified.getTime() },
-    ]);
   }
 
   async size(id: number) {

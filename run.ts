@@ -1,14 +1,5 @@
-import {
-  elements,
-  encode,
-  get,
-  type HyperNode,
-  post,
-  router,
-  serve,
-  trust,
-} from "./deps.ts";
-import { Threads } from "./db/Thread1.ts";
+import { elements, get, post, router, serve, trust } from "./deps.ts";
+import { Core } from "./core.ts";
 import { markdown } from "./md.ts";
 
 const logErr = (err: Error) => console.error(err.message);
@@ -33,19 +24,8 @@ const {
   style,
   h6,
 } = elements;
-const t = new Threads();
 
-const cache: Record<string, { created: Date; data: HyperNode }> = {};
-
-const removeOldest = () => {
-  const oldestTime = Math.min(
-    ...Object.values(cache).map((x) => x.created.getTime()),
-  );
-  const id = Object.entries(cache).find(([, v]) =>
-    v.created.getTime() === oldestTime
-  )?.[0];
-  if (id) delete cache[id];
-};
+const core = new Core(20, 10);
 
 const server = serve(
   { port: 8080, hostname: "127.0.0.1" },
@@ -85,7 +65,7 @@ const server = serve(
               ),
               section(input({ type: "submit", value: "Create thread" })),
             ),
-            ...(await t.recent(10)).flatMap(
+            ...(await core.recentThreads()).flatMap(
               (
                 x,
               ) => [
@@ -110,17 +90,7 @@ const server = serve(
     ),
     get("/thread/:id", async (ctx) => {
       const id = Number(new URL(ctx.request.url).pathname.split("/")[2]);
-      if (Number.isNaN(id)) {
-        return ctx.respond("Missing thread").catch(logErr);
-      }
       try {
-        if (
-          (await t.lastModified(id)).getTime() <
-            Date.now() - 7 * 24 * 60 * 60 * 1000
-        ) {
-          return ctx.respond("Expired thread").catch(logErr);
-        }
-        if (id in cache) return ctx.render(cache[id].data).catch(logErr);
         const {
           title: tit,
           text,
@@ -128,7 +98,7 @@ const server = serve(
           replies,
           created,
           modified,
-        } = await t.load(id);
+        } = await core.getThread(id);
         const vdom = html(
           head(
             meta({ charset: "utf-8" }),
@@ -158,7 +128,7 @@ const server = serve(
               hr(),
               article(h6(r.hash), trust(await markdown(r.text))),
             ]))).flat(),
-            (await t.size(id) < 1024 * 1024) && form(
+            (await core.isThreadFull(id)) && form(
               { method: "POST", action: "/api/thread/post" },
               input({ type: "hidden", name: "id", value: String(id) }),
               section(
@@ -175,8 +145,6 @@ const server = serve(
             script({ type: "application/javascript", src: "/tooltip.js" }),
           ),
         );
-        cache[id] = { created: new Date(), data: vdom };
-        while (Object.keys(cache).length > 100) removeOldest();
         return ctx.render(vdom).catch(logErr);
       } catch (err) {
         return ctx.respond(err.message, { status: 400 }).catch(logErr);
@@ -200,11 +168,8 @@ const server = serve(
       }
 
       try {
-        const hash = encode(crypto.getRandomValues(new Uint8Array(12)), {
-          standard: "Z85",
-        });
-        const id = await t.create(title, text, hash);
-        console.log("thread create", id, title, hash);
+        const id = await core.createThread(title, text);
+        console.log("thread create", id, title);
         return ctx.respond(
           new Response(null, {
             status: 302,
@@ -224,9 +189,7 @@ const server = serve(
       const fd = await ctx.request.formData();
       const id = Number(fd.get("id")!);
       if (Number.isNaN(id)) {
-        return ctx.respond("Bad thread id", { status: 400 }).catch(
-          logErr,
-        );
+        return ctx.respond("Bad thread id", { status: 400 }).catch(logErr);
       }
 
       const text = fd.get("text")!;
@@ -235,25 +198,8 @@ const server = serve(
       }
 
       try {
-        if (
-          (await t.lastModified(id)).getTime() <
-            Date.now() - 7 * 24 * 60 * 60 * 1000
-        ) {
-          return ctx.respond("Expired thread").catch(logErr);
-        }
-        if (await t.size(id) > 1024 * 1024) {
-          return ctx.respond("Thread is full", { status: 400 }).catch(logErr);
-        }
-        const hash = encode(crypto.getRandomValues(new Uint8Array(12)), {
-          standard: "Z85",
-        });
-        console.log("thread post", id, hash);
-        await t.post(
-          id,
-          text,
-          hash,
-        );
-        delete cache[id];
+        console.log("thread post", id);
+        await core.replyToThread(id, text);
         return ctx.respond(
           new Response(null, {
             status: 302,
@@ -272,6 +218,91 @@ const server = serve(
       await ctx.respond(file.readable, {
         headers: { "Content-Type": "application/javascript" },
       }).catch(logErr);
+    }),
+    get("/docs/", async (ctx) => {
+      const file = await Deno.open("redoc-static.html");
+      await ctx.respond(file.readable, {
+        headers: { "Content-Type": "text/html" },
+      }).catch(logErr);
+    }),
+    get("/api/thread/:id", async (ctx) => {
+      try {
+        const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
+        return ctx.respond(
+          JSON.stringify({
+            ok: true,
+            thread: await core.getThread(id),
+          }),
+          { headers: { "Content-Type": "application/json" } },
+        ).catch(logErr);
+      } catch (err) {
+        return ctx.respond(
+          JSON.stringify({
+            ok: false,
+            error: err.message,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        ).catch(logErr);
+      }
+    }),
+    post("/api/thread/create.json", async (ctx) => {
+      try {
+        const obj = await ctx.request.json();
+        if (!("title" in obj) || typeof obj.title !== "string") {
+          throw new Error("Bad title");
+        }
+        if (!("text" in obj) || typeof obj.text !== "string") {
+          throw new Error("Bad text");
+        }
+        return ctx.respond(
+          JSON.stringify({
+            ok: true,
+            id: await core.createThread(obj.title, obj.text),
+          }),
+          { headers: { "Content-Type": "application/json" } },
+        ).catch(logErr);
+      } catch (err) {
+        return ctx.respond(
+          JSON.stringify({
+            ok: false,
+            error: err.message,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        ).catch(logErr);
+      }
+    }),
+    post("/api/thread/post.json", async (ctx) => {
+      try {
+        const obj = await ctx.request.json();
+        if (!("id" in obj) || typeof obj.id !== "number") {
+          throw new Error("Bad id");
+        }
+        if (!("text" in obj) || typeof obj.text !== "string") {
+          throw new Error("Bad text");
+        }
+        await core.replyToThread(obj.id, obj.text);
+        return ctx.respond(
+          JSON.stringify({ ok: true }),
+          { headers: { "Content-Type": "application/json" } },
+        ).catch(logErr);
+      } catch (err) {
+        return ctx.respond(
+          JSON.stringify({
+            ok: false,
+            error: err.message,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        ).catch(logErr);
+      }
     }),
   ),
 );

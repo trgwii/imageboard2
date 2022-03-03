@@ -3,7 +3,7 @@ const tooltip = document.createElement("div");
 Object.assign(tooltip.style, {
   position: "absolute",
   display: "none",
-  fontFamily: "'{codeFont}', monospace",
+  fontFamily: "'Inconsolata', monospace",
   fontSize: "14px",
   backgroundColor: "#1E1E1E",
   border: "1px solid #727272",
@@ -11,8 +11,8 @@ Object.assign(tooltip.style, {
 });
 const offset = 20;
 document.body.addEventListener("mousemove", (e) => {
-  tooltip.style.top = offset + e.clientY + "px";
-  tooltip.style.left = offset + e.clientX + "px";
+  tooltip.style.top = offset + e.clientY + scrollY + "px";
+  tooltip.style.left = offset + e.clientX + scrollX + "px";
 });
 document.body.appendChild(tooltip);
 const lsps = document.getElementsByTagName("data-lsp");
