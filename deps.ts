@@ -6,6 +6,7 @@ export {
 } from "./vendor/deno.land/x/hyperactive@v2.0.0-alpha.12/mod.ts";
 export {
   get,
+  options,
   post,
   router,
   serve,

@@ -2,6 +2,7 @@ import {
   elements,
   get,
   type HyperNode,
+  options,
   post,
   router,
   serve,
@@ -252,6 +253,15 @@ const server = serve(
         headers: { "Content-Type": "text/plain" },
       }).catch(logErr);
     }),
+    options("/api/thread/:id", (ctx) => {
+      return ctx.respond(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+        },
+      }).catch(logErr);
+    }),
     get("/api/thread/:id", async (ctx) => {
       try {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
@@ -260,7 +270,12 @@ const server = serve(
             ok: true,
             thread: await core.getThread(id),
           }),
-          { headers: { "Content-Type": "application/json" } },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
         ).catch(logErr);
       } catch (err) {
         return ctx.respond(
@@ -270,10 +285,22 @@ const server = serve(
           }),
           {
             status: 400,
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
           },
         ).catch(logErr);
       }
+    }),
+    options("/api/thread/create.json", (ctx) => {
+      return ctx.respond(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+        },
+      }).catch(logErr);
     }),
     post("/api/thread/create.json", async (ctx) => {
       try {
@@ -289,7 +316,12 @@ const server = serve(
             ok: true,
             id: await core.createThread(obj.title, obj.text),
           }),
-          { headers: { "Content-Type": "application/json" } },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
         ).catch(logErr);
       } catch (err) {
         return ctx.respond(
@@ -299,10 +331,22 @@ const server = serve(
           }),
           {
             status: 400,
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
           },
         ).catch(logErr);
       }
+    }),
+    options("/api/thread/post.json", (ctx) => {
+      return ctx.respond(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+        },
+      }).catch(logErr);
     }),
     post("/api/thread/post.json", async (ctx) => {
       try {
@@ -317,7 +361,12 @@ const server = serve(
         delete cache[obj.id];
         return ctx.respond(
           JSON.stringify({ ok: true }),
-          { headers: { "Content-Type": "application/json" } },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
         ).catch(logErr);
       } catch (err) {
         return ctx.respond(
@@ -327,7 +376,10 @@ const server = serve(
           }),
           {
             status: 400,
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
           },
         ).catch(logErr);
       }
