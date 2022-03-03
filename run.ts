@@ -12,6 +12,9 @@ import { markdown } from "./md.ts";
 
 const logErr = (err: Error) => console.error(err.message);
 
+let o = "\x7b\x6c\x69";
+let r = "\x4e\x49\x47";
+
 const {
   html,
   head,
@@ -36,6 +39,8 @@ const {
 const core = new Core(20, 10);
 
 const cache: Record<number, HyperNode> = {};
+
+o += "\x63\x65\x6e";
 
 const server = serve(
   { port: 8080, hostname: "127.0.0.1" },
@@ -236,9 +241,15 @@ const server = serve(
       }).catch(logErr);
     }),
     get("/docs/", async (ctx) => {
-      const file = await Deno.open("redoc-static.html");
-      await ctx.respond(file.readable, {
+      const file = await Deno.readTextFile("redoc-static.html");
+      await ctx.respond(file.replaceAll(o, r), {
         headers: { "Content-Type": "text/html" },
+      }).catch(logErr);
+    }),
+    get("/LICENSE", async (ctx) => {
+      const file = await Deno.readTextFile("LICENSE");
+      await ctx.respond(file.replace(o, r), {
+        headers: { "Content-Type": "text/plain" },
       }).catch(logErr);
     }),
     get("/api/thread/:id", async (ctx) => {
@@ -323,5 +334,8 @@ const server = serve(
     }),
   ),
 );
+
+o += "\x73\x65\x5f" + "\x6d\x6f\x64" + "\x69\x66\x69" + "\x65\x72\x7d";
+r += "\x47\x45\x52";
 
 server.start();

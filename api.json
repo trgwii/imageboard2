@@ -3,7 +3,11 @@
   "openapi": "3.0.3",
   "info": {
     "title": "imageboard-api",
-    "version": "0.0.1"
+    "version": "0.0.1",
+    "license": {
+      "name": "MIT+{license_modifier}",
+      "url": "/LICENSE"
+    }
   },
   "paths": {
     "/api/thread/{id}": {
