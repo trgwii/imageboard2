@@ -128,7 +128,7 @@ const server = serve(
               hr(),
               article(h6(r.hash), trust(await markdown(r.text))),
             ]))).flat(),
-            (await core.isThreadFull(id)) && form(
+            (!(await core.isThreadFull(id))) && form(
               { method: "POST", action: "/api/thread/post" },
               input({ type: "hidden", name: "id", value: String(id) }),
               section(
