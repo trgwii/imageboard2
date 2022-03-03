@@ -253,15 +253,6 @@ const server = serve(
         headers: { "Content-Type": "text/plain" },
       }).catch(logErr);
     }),
-    options("/api/thread/:id", (ctx) => {
-      return ctx.respond(null, {
-        status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-        },
-      }).catch(logErr);
-    }),
     get("/api/thread/:id", async (ctx) => {
       try {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
@@ -385,6 +376,15 @@ const server = serve(
           },
         ).catch(logErr);
       }
+    }),
+    options("/api/thread/:id", (ctx) => {
+      return ctx.respond(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+        },
+      }).catch(logErr);
     }),
   ),
 );
