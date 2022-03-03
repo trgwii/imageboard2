@@ -267,7 +267,7 @@ const server = serve(
         return ctx.respond(
           JSON.stringify({
             ok: true,
-            thread: (await core.recentThreads()).map((t) => ({
+            threads: (await core.recentThreads()).map((t) => ({
               id: t.id,
               created: t.birthtime,
               modified: t.mtime,
