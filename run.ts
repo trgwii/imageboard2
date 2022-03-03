@@ -1,4 +1,12 @@
-import { elements, get, post, router, serve, trust } from "./deps.ts";
+import {
+  elements,
+  get,
+  type HyperNode,
+  post,
+  router,
+  serve,
+  trust,
+} from "./deps.ts";
 import { Core } from "./core.ts";
 import { markdown } from "./md.ts";
 
@@ -26,6 +34,8 @@ const {
 } = elements;
 
 const core = new Core(20, 10);
+
+const cache: Record<number, HyperNode> = {};
 
 const server = serve(
   { port: 8080, hostname: "127.0.0.1" },
@@ -90,6 +100,7 @@ const server = serve(
     ),
     get("/thread/:id", async (ctx) => {
       const id = Number(new URL(ctx.request.url).pathname.split("/")[2]);
+      if (id in cache) return ctx.render(cache[id]).catch(logErr);
       try {
         const {
           title: tit,
@@ -145,6 +156,10 @@ const server = serve(
             script({ type: "application/javascript", src: "/tooltip.js" }),
           ),
         );
+        while (Object.keys(cache).length > 20) {
+          delete cache[Object.keys(cache)[0] as unknown as number];
+        }
+        cache[id] = vdom;
         return ctx.render(vdom).catch(logErr);
       } catch (err) {
         return ctx.respond(err.message, { status: 400 }).catch(logErr);
@@ -200,6 +215,7 @@ const server = serve(
       try {
         console.log("thread post", id);
         await core.replyToThread(id, text);
+        delete cache[id];
         return ctx.respond(
           new Response(null, {
             status: 302,
@@ -287,6 +303,7 @@ const server = serve(
           throw new Error("Bad text");
         }
         await core.replyToThread(obj.id, obj.text);
+        delete cache[obj.id];
         return ctx.respond(
           JSON.stringify({ ok: true }),
           { headers: { "Content-Type": "application/json" } },
