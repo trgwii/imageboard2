@@ -11,6 +11,19 @@ const half = (buf: ArrayBuffer) => {
   return result;
 };
 
+const concat = (a: Uint8Array, b: Uint8Array) => {
+  const result = new Uint8Array(a.byteLength + b.byteLength);
+  result.set(a, 0);
+  result.set(b, a.byteLength);
+  return result;
+};
+
+const salt = await Deno.readFile("salt").catch(async () => {
+  const buf = crypto.getRandomValues(new Uint8Array(64));
+  await Deno.writeFile("salt", buf);
+  return buf;
+});
+
 export class Core {
   readonly db = new Threads();
   readonly threadCache: Record<string, {
@@ -56,7 +69,7 @@ export class Core {
     return encode(half(half(half(
       await crypto.subtle.digest(
         "SHA-256",
-        new TextEncoder().encode(ident),
+        concat(salt, new TextEncoder().encode(ident)),
       ),
     ))));
   }
