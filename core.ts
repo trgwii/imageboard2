@@ -1,6 +1,16 @@
 import { encode } from "./deps.ts";
 import { ThreadBuf, Threads, type ValueFromSchema } from "./db/Thread1.ts";
 
+const half = (buf: ArrayBuffer) => {
+  const halfLength = Math.floor(buf.byteLength / 2);
+  const result = new Uint8Array(halfLength);
+  const b = new Uint8Array(buf);
+  for (let i = 0; i < halfLength; i++) {
+    result[i] = b[i] ^ b[b.byteLength - i];
+  }
+  return result;
+};
+
 export class Core {
   readonly db = new Threads();
   readonly threadCache: Record<string, {
@@ -42,11 +52,13 @@ export class Core {
   async isThreadFull(id: number) {
     return (await this.db.size(id)) > 1024 * 1024;
   }
-  hash() {
-    return encode(
-      crypto.getRandomValues(new Uint8Array(12)),
-      { standard: "Z85" },
-    );
+  async hash(ident: string) {
+    return encode(half(half(half(
+      await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(ident),
+      ),
+    ))));
   }
   async getThread(id: number) {
     await this.assertThreadActive(id);
@@ -62,7 +74,7 @@ export class Core {
     return this.recentThreadCache;
   }
 
-  createThread(title: string, text: string) {
+  async createThread(title: string, text: string, ident: string) {
     if (!title || title.length < 1 || title.length > 255) {
       throw new Error("Bad title");
     }
@@ -70,12 +82,16 @@ export class Core {
       throw new Error("Bad text");
     }
     this.recentThreadCache.splice(0, Infinity);
-    return this.db.create(title, text, this.hash());
+    return this.db.create(
+      title,
+      text,
+      await this.hash(`${this.db.id}:${ident}`),
+    );
   }
-  async replyToThread(id: number, text: string) {
+  async replyToThread(id: number, text: string, ident: string) {
     await this.assertThreadActive(id);
     if (await this.isThreadFull(id)) throw new Error("Thread is full");
-    await this.db.post(id, text, this.hash());
+    await this.db.post(id, text, await this.hash(`${id}:${ident}`));
     delete this.threadCache[id];
     this.recentThreadCache.splice(0, Infinity);
   }

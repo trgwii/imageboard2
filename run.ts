@@ -189,7 +189,11 @@ const server = serve(
       }
 
       try {
-        const id = await core.createThread(title, text);
+        const id = await core.createThread(
+          title,
+          text,
+          ctx.request.headers.get("X-Forwarded-For")!,
+        );
         console.log("thread create", id, title);
         return ctx.respond(
           new Response(null, {
@@ -220,7 +224,11 @@ const server = serve(
 
       try {
         console.log("thread post", id);
-        await core.replyToThread(id, text);
+        await core.replyToThread(
+          id,
+          text,
+          ctx.request.headers.get("X-Forwarded-For")!,
+        );
         delete cache[id];
         return ctx.respond(
           new Response(null, {
@@ -232,8 +240,10 @@ const server = serve(
         return ctx.respond(err.message, { status: 400 }).catch(logErr);
       }
     }),
-    get("/api/self/hash", (ctx) => {
-      return ctx.respond(ctx.request.headers.get("X-Forwarded-For"));
+    get("/api/self/hash", async (ctx) => {
+      return ctx.respond(
+        await core.hash(ctx.request.headers.get("X-Forwarded-For")!),
+      );
     }),
     get("/tooltip.js", async (ctx) => {
       const file = await Deno.open("tooltip.js");
@@ -351,7 +361,11 @@ const server = serve(
         return ctx.respond(
           JSON.stringify({
             ok: true,
-            id: await core.createThread(obj.title, obj.text),
+            id: await core.createThread(
+              obj.title,
+              obj.text,
+              ctx.request.headers.get("X-Forwarded-For")!,
+            ),
           }),
           {
             headers: {
@@ -395,7 +409,11 @@ const server = serve(
         if (!("text" in obj) || typeof obj.text !== "string") {
           throw new Error("Bad text");
         }
-        await core.replyToThread(obj.id, obj.text);
+        await core.replyToThread(
+          obj.id,
+          obj.text,
+          ctx.request.headers.get("X-Forwarded-For")!,
+        );
         delete cache[obj.id];
         return ctx.respond(
           JSON.stringify({ ok: true }),
