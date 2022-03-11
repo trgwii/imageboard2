@@ -29,6 +29,7 @@ for await (const e of Deno.readDir("threads/v1")) {
           "k.fG54$f#PPF9f>",
           "F:RhkuDY/^vTCD6",
           "ykuIUXARXWuB2Dv",
+          "BX!IuAHUyo(dB*W",
         ].includes(reply.hash)
       )
       .map((reply) => {
