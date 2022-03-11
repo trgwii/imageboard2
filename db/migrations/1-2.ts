@@ -23,7 +23,14 @@ for await (const e of Deno.readDir("threads/v1")) {
     title: thread.title,
     text: thread.text.slice(0, 65535),
     replies: thread.replies
-      .filter((reply) => !["vT=14nTlIE&!4:u"].includes(reply.hash))
+      .filter((reply) =>
+        ![
+          "vT=14nTlIE&!4:u",
+          "k.fG54$f#PPF9f>",
+          "F:RhkuDY/^vTCD6",
+          "ykuIUXARXWuB2Dv",
+        ].includes(reply.hash)
+      )
       .map((reply) => {
         if (reply.text.length > 65535) {
           console.log(id, reply);
