@@ -1,5 +1,5 @@
 import { encode } from "./deps.ts";
-import { ThreadBuf, Threads, type ValueFromSchema } from "./db/Thread1.ts";
+import { ThreadBuf, Threads, type ValueFromSchema } from "./db/Thread2.ts";
 
 const half = (buf: ArrayBuffer) => {
   const halfLength = Math.floor(buf.byteLength / 2);
@@ -25,7 +25,7 @@ const salt = await Deno.readFile("salt").catch(async () => {
 });
 
 export class Core {
-  readonly db = new Threads();
+  readonly db = new Threads("main");
   readonly threadCache: Record<string, {
     cached: Date;
     value: ValueFromSchema<typeof ThreadBuf.schema>;
