@@ -78,7 +78,7 @@ const server = serve(
             }),
             title("Thomas's Cool Forum Software"),
             style(
-              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; }",
+              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; } a { color: #3391ff; }",
             ),
           ),
           body(
@@ -158,7 +158,7 @@ const server = serve(
             }),
             title("Thomas's Cool Forum Software - " + tit),
             style(
-              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; }",
+              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; } a { color: #3391ff; }",
             ),
           ),
           body(
