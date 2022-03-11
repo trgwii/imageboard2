@@ -1,6 +1,7 @@
 export {
   elements,
   type HyperNode,
+  type HyperNodeish,
   renderHTML,
   trust,
 } from "./vendor/deno.land/x/hyperactive@v2.0.0-alpha.12/mod.ts";

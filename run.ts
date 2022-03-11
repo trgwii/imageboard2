@@ -10,6 +10,7 @@ import {
 } from "./deps.ts";
 import { Core } from "./core.ts";
 import { markdown } from "./md.ts";
+import { CreateThreadForm, Doc, ReplyToThreadForm } from "./html.ts";
 
 const logErr = (err: Error) => console.error(err.message);
 
@@ -17,26 +18,15 @@ let o = "\x7b\x6c\x69";
 let r = "\x4e\x49\x47";
 
 const {
-  html,
-  head,
-  meta,
+  a,
   article,
-  title,
   body,
-  img,
-  h1,
-  form,
-  input,
-  button,
-  textarea,
-  script,
   br,
-  section,
+  h1,
+  h6,
   hr,
   p,
-  a,
-  style,
-  h6,
+  script,
 } = elements;
 
 const core = new Core(20, 10);
@@ -66,112 +56,49 @@ const server = serve(
       "/icons/comment_add.png",
       "public/icons/comment_add.png",
     ),
-    get(
-      "/",
-      async (ctx) =>
-        ctx.render(html(
-          head(
-            meta({ charset: "utf-8" }),
-            meta({
-              name: "viewport",
-              content: "width=device-width, initial-scale=1",
-            }),
-            title("Thomas's Cool Forum Software"),
-            style(
-              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; } a { color: #3391ff; }",
-            ),
+    get("/", async (ctx) =>
+      ctx.render(Doc(
+        "Thomas's Cool Forum Software",
+        h1("Thomas's Cool Forum Software"),
+        CreateThreadForm(),
+        ...(await core.recentThreads()).flatMap((x) => [
+          hr(),
+          p(
+            x.birthtime.toISOString()
+              .replace("T", " ").replace(/:\d{2}\..+/, ""),
+            " | ",
+            x.mtime.toISOString()
+              .replace("T", " ").replace(/:\d{2}\..+/, ""),
+            " | ",
+            x.hash,
+            br(),
+            a({ href: "/thread/" + x.id }, x.title),
           ),
-          body(
-            h1(
-              "Thomas's Cool Forum Software",
-            ),
-            form(
-              { method: "POST", action: "/api/thread/create" },
-              section(input({
-                type: "text",
-                name: "title",
-                placeholder: "Thread title",
-                maxlength: 256,
-              })),
-              section(
-                textarea({
-                  name: "text",
-                  placeholder: "Thread text",
-                  maxlength: 65536,
-                  cols: 60,
-                  rows: 5,
-                }),
-              ),
-              section(
-                button(
-                  { type: "submit" },
-                  img({
-                    src: "/icons/comments_add.png",
-                    width: 32,
-                    height: 32,
-                    style: "image-rendering: pixelated",
-                  }),
-                ),
-              ),
-            ),
-            ...(await core.recentThreads()).flatMap(
-              (
-                x,
-              ) => [
-                hr(),
-                p(
-                  x.birthtime.toISOString()
-                    .replace("T", " ")
-                    .replace(/:\d{2}\..+/, ""),
-                  " | ",
-                  x.mtime.toISOString()
-                    .replace("T", " ")
-                    .replace(/:\d{2}\..+/, ""),
-                  " | ",
-                  x.hash,
-                  br(),
-                  a({ href: "/thread/" + x.id }, x.title),
-                ),
-              ],
-            ),
-          ),
-        )).catch(logErr),
-    ),
+        ]),
+      )).catch(logErr)),
     get("/thread/:id", async (ctx) => {
       const id = Number(new URL(ctx.request.url).pathname.split("/")[2]);
       if (id in cache) return ctx.render(cache[id]).catch(logErr);
       try {
         const {
-          title: tit,
+          title,
           text,
           hash,
           replies,
           created,
           modified,
         } = await core.getThread(id);
-        const vdom = html(
-          head(
-            meta({ charset: "utf-8" }),
-            meta({
-              name: "viewport",
-              content: "width=device-width, initial-scale=1",
-            }),
-            title("Thomas's Cool Forum Software - " + tit),
-            style(
-              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; } a { color: #3391ff; }",
-            ),
-          ),
+        const vdom = Doc(
+          "Thomas's Cool Forum Software - " + title,
           body(
             a({ href: "/" }, "Back to main page"),
-            h1(tit),
+            h1(title),
             h6(
               created.toISOString()
-                .replace("T", " ")
-                .replace(/:\d{2}\..+/, ""),
+                .replace("T", " ").replace(/:\d{2}\..+/, ""),
               " | ",
               modified.toISOString()
-                .replace("T", " ")
-                .replace(/:\d{2}\..+/, ""),
+                .replace("T", " ").replace(/:\d{2}\..+/, ""),
               " | ",
               hash,
             ),
@@ -180,30 +107,7 @@ const server = serve(
               hr(),
               article(h6(r.hash), trust(await markdown(r.text))),
             ]))).flat(),
-            (!(await core.isThreadFull(id))) && form(
-              { method: "POST", action: "/api/thread/post" },
-              input({ type: "hidden", name: "id", value: String(id) }),
-              section(
-                textarea({
-                  name: "text",
-                  placeholder: "Reply text",
-                  maxlength: 65536,
-                  cols: 60,
-                  rows: 6,
-                }),
-              ),
-              section(
-                button(
-                  { type: "submit" },
-                  img({
-                    src: "/icons/comment_add.png",
-                    width: 32,
-                    height: 32,
-                    style: "image-rendering: pixelated",
-                  }),
-                ),
-              ),
-            ),
+            (!(await core.isThreadFull(id))) && ReplyToThreadForm(id),
             script({ type: "application/javascript", src: "/tooltip.js" }),
           ),
         );
