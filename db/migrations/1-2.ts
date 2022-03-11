@@ -22,15 +22,17 @@ for await (const e of Deno.readDir("threads/v1")) {
     hash: thread.hash,
     title: thread.title,
     text: thread.text.slice(0, 65535),
-    replies: thread.replies.map((reply) => {
-      if (reply.text.length > 65535) {
-        console.log(id, reply);
-      }
-      return {
-        created: null,
-        ...reply,
-      };
-    }),
+    replies: thread.replies
+      .filter((reply) => !["vT=14nTlIE&!4:u"].includes(reply.hash))
+      .map((reply) => {
+        if (reply.text.length > 65535) {
+          console.log(id, reply);
+        }
+        return {
+          created: null,
+          ...reply,
+        };
+      }),
   }, sfile);
   sfile.close();
 }
