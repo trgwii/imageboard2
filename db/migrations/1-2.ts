@@ -24,7 +24,7 @@ for await (const e of Deno.readDir("threads/v1")) {
     text: thread.text.slice(0, 65535),
     replies: thread.replies.map((reply) => {
       if (reply.text.length > 65535) {
-        console.log(reply);
+        console.log(id, reply);
       }
       return {
         created: null,
