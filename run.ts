@@ -23,9 +23,11 @@ const {
   article,
   title,
   body,
+  img,
   h1,
   form,
   input,
+  button,
   textarea,
   script,
   br,
@@ -43,9 +45,27 @@ const cache: Record<number, HyperNode> = {};
 
 o += "\x63\x65\x6e";
 
+const file = (mime: string, url: string, path: string) =>
+  get(url, async (ctx) => {
+    const file = await Deno.open(path);
+    await ctx.respond(file.readable, {
+      headers: { "Content-Type": mime },
+    }).catch(logErr);
+  });
+
 const server = serve(
   { port: 8080, hostname: "127.0.0.1" },
   router(
+    file(
+      "image/png",
+      "/icons/comments_add.png",
+      "public/icons/comments_add.png",
+    ),
+    file(
+      "image/png",
+      "/icons/comment_add.png",
+      "public/icons/comment_add.png",
+    ),
     get(
       "/",
       async (ctx) =>
@@ -57,6 +77,9 @@ const server = serve(
               content: "width=device-width, initial-scale=1",
             }),
             title("Thomas's Cool Forum Software"),
+            style(
+              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; }",
+            ),
           ),
           body(
             h1(
@@ -79,7 +102,17 @@ const server = serve(
                   rows: 5,
                 }),
               ),
-              section(input({ type: "submit", value: "Create thread" })),
+              section(
+                button(
+                  { type: "submit" },
+                  img({
+                    src: "/icons/comments_add.png",
+                    width: 32,
+                    height: 32,
+                    style: "image-rendering: crisp-edges",
+                  }),
+                ),
+              ),
             ),
             ...(await core.recentThreads()).flatMap(
               (
@@ -124,7 +157,9 @@ const server = serve(
               content: "width=device-width, initial-scale=1",
             }),
             title("Thomas's Cool Forum Software - " + tit),
-            style("div.language-id { display: none; }"),
+            style(
+              "div.language-id { display: none; } body, textarea, input, select, button { background-color: #181a1b; color: #e8e6e3; border-color: #736b5e; }",
+            ),
           ),
           body(
             a({ href: "/" }, "Back to main page"),
@@ -157,7 +192,17 @@ const server = serve(
                   rows: 6,
                 }),
               ),
-              section(input({ type: "submit", value: "Reply to thread" })),
+              section(
+                button(
+                  { type: "submit" },
+                  img({
+                    src: "/icons/comment_add.png",
+                    width: 32,
+                    height: 32,
+                    style: "image-rendering: crisp-edges",
+                  }),
+                ),
+              ),
             ),
             script({ type: "application/javascript", src: "/tooltip.js" }),
           ),
@@ -240,17 +285,7 @@ const server = serve(
         return ctx.respond(err.message, { status: 400 }).catch(logErr);
       }
     }),
-    get("/api/self/hash", async (ctx) => {
-      return ctx.respond(
-        await core.hash(ctx.request.headers.get("X-Forwarded-For")!),
-      );
-    }),
-    get("/tooltip.js", async (ctx) => {
-      const file = await Deno.open("tooltip.js");
-      await ctx.respond(file.readable, {
-        headers: { "Content-Type": "application/javascript" },
-      }).catch(logErr);
-    }),
+    file("application/javascript", "/tooltip.js", "tooltip.js"),
     get("/docs/", async (ctx) => {
       const file = await Deno.readTextFile("redoc-static.html");
       await ctx.respond(file.replaceAll(o, r), {
