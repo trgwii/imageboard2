@@ -30,7 +30,7 @@ for await (const e of Deno.readDir("threads/v1")) {
           "F:RhkuDY/^vTCD6",
           "ykuIUXARXWuB2Dv",
           "BX!IuAHUyo(dB*W",
-        ].includes(reply.hash)
+        ].includes(reply.hash) || (id === 3219 && reply.hash === "xjMWlQ")
       )
       .map((reply) => {
         if (reply.text.length > 65535) {
