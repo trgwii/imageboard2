@@ -13,16 +13,24 @@ for await (const e of Deno.readDir("threads/v1")) {
     `boards/main/threads/v2/${id}`,
     { createNew: true, write: true },
   );
+  if (thread.text.length > 65535) {
+    console.log(thread);
+  }
   await ThreadBuf.write({
     created: stat.birthtime ?? new Date(0),
     modified: stat.mtime ?? new Date(0),
     hash: thread.hash,
     title: thread.title,
     text: thread.text.slice(0, 65535),
-    replies: thread.replies.map((reply) => ({
-      created: null,
-      ...reply,
-    })),
+    replies: thread.replies.map((reply) => {
+      if (reply.text.length > 65535) {
+        console.log(reply);
+      }
+      return {
+        created: null,
+        ...reply,
+      };
+    }),
   }, sfile);
   sfile.close();
 }
