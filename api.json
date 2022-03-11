@@ -125,6 +125,10 @@
                             "additionalProperties": false,
                             "required": ["hash", "text"],
                             "properties": {
+                              "created": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
                               "hash": { "type": "string", "maxLength": 255 },
                               "text": { "type": "string", "maxLength": 65535 }
                             }

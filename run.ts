@@ -250,10 +250,18 @@ const server = serve(
     get("/api/thread/:id", async (ctx) => {
       try {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
+        const data = await core.getThread(id);
         return ctx.respond(
           JSON.stringify({
             ok: true,
-            thread: await core.getThread(id),
+            thread: {
+              ...data,
+              replies: data.replies.map((reply) => ({
+                ...reply.created ? { created: reply.created } : {},
+                hash: reply.hash,
+                text: reply.text,
+              })),
+            },
           }),
           {
             headers: {
