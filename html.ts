@@ -47,9 +47,10 @@ export const Doc = (titleStr: string, ...children: HyperNodeish[]) =>
     body(...children),
   );
 
-export const CreateThreadForm = () =>
+export const CreateThreadForm = (board: string) =>
   form(
     { method: "POST", action: "/api/thread/create" },
+    input({ type: "hidden", name: "board", value: board }),
     section(input({
       type: "text",
       name: "title",
@@ -74,10 +75,11 @@ export const CreateThreadForm = () =>
     )),
   );
 
-export const ReplyToThreadForm = (id: number) =>
+export const ReplyToThreadForm = (id: number, board: string) =>
   form(
     { method: "POST", action: "/api/thread/post" },
     input({ type: "hidden", name: "id", value: String(id) }),
+    input({ type: "hidden", name: "board", value: board }),
     section(textarea({
       name: "text",
       placeholder: "Reply text",

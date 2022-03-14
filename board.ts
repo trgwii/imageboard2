@@ -24,8 +24,8 @@ const salt = await Deno.readFile("salt").catch(async () => {
   return buf;
 });
 
-export class Core {
-  readonly db = new Threads("main");
+export class Board {
+  readonly db: Threads;
   readonly threadCache = new Map<number, {
     cached: Date;
     value: ValueFromSchema<typeof ThreadBuf.schema>;
@@ -41,7 +41,10 @@ export class Core {
   constructor(
     readonly threadCacheMaxSize: number,
     readonly recentThreadMaxCount: number,
-  ) {}
+    readonly name: string,
+  ) {
+    this.db = new Threads(name);
+  }
   shrinkThreadCache() {
     const oldestIdsLast = Object.entries(this.threadCache).sort(
       ([, entryA], [, entryB]) => {

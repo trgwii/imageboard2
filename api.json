@@ -12,6 +12,7 @@
   "paths": {
     "/api/thread/recent": {
       "get": {
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "Got recent threads",
@@ -81,6 +82,7 @@
     },
     "/api/thread/{id}": {
       "get": {
+        "deprecated": true,
         "parameters": [
           {
             "in": "path",
@@ -164,6 +166,7 @@
     },
     "/api/thread/create.json": {
       "post": {
+        "deprecated": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -217,6 +220,342 @@
       }
     },
     "/api/thread/post.json": {
+      "post": {
+        "deprecated": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "text"],
+                "properties": {
+                  "id": { "type": "integer", "minimum": 1 },
+                  "text": { "type": "string", "maxLength": 65535 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully replied to thread",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [true] }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "error"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [false] },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successfully fetched board info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "boards"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [true] },
+                    "boards": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["name", "description"],
+                        "properties": {
+                          "name": { "type": "string", "maxLength": 255 },
+                          "description": { "type": "string", "maxLength": 255 }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{board}/thread/recent": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "board",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Board name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Got recent threads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "threads"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [true] },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "id",
+                          "created",
+                          "modified",
+                          "hash",
+                          "title",
+                          "replies"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "created": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "modified": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "hash": { "type": "string", "maxLength": 255 },
+                          "title": { "type": "string", "maxLength": 255 },
+                          "replies": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "error"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [false] },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{board}thread/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "board",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Board name"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Thread ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Got thread data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "thread"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [true] },
+                    "thread": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "created",
+                        "modified",
+                        "hash",
+                        "title",
+                        "text",
+                        "replies"
+                      ],
+                      "properties": {
+                        "created": { "type": "string", "format": "date-time" },
+                        "modified": { "type": "string", "format": "date-time" },
+                        "hash": { "type": "string", "maxLength": 255 },
+                        "title": { "type": "string", "maxLength": 255 },
+                        "text": { "type": "string", "maxLength": 65535 },
+                        "replies": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["hash", "text"],
+                            "properties": {
+                              "created": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "hash": { "type": "string", "maxLength": 255 },
+                              "text": { "type": "string", "maxLength": 65535 }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "error"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [false] },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{board}/thread/create.json": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "board",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "Board name"
+        }
+      ],
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["title", "text"],
+                "properties": {
+                  "title": { "type": "string", "maxLength": 255 },
+                  "text": { "type": "string", "maxLength": 65535 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully created thread",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "id"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [true] },
+                    "id": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ok", "error"],
+                  "properties": {
+                    "ok": { "type": "boolean", "enum": [false] },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{board}/thread/post.json": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "board",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "Board name"
+        }
+      ],
       "post": {
         "requestBody": {
           "required": true,
