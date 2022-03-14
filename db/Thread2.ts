@@ -24,7 +24,7 @@ export const ThreadBuf = new Buf({
   ),
 });
 
-const { Current } = Deno.SeekMode;
+const { Start, Current } = Deno.SeekMode;
 
 export class Threads implements IThread {
   dir: string;
@@ -149,12 +149,13 @@ export class Threads implements IThread {
       { read: true, write: true },
     );
     // Skip version + checksum + created time
-    await file.seek(4 + s.created.size, Current);
+    const modtimeOffset = await file.seek(
+      4 + s.created.size,
+      Current,
+    );
 
-    const modified = new Date();
-
-    // Update modtime
-    await s.modified.write(modified, file);
+    // Skip modified time
+    await file.seek(s.modified.size, Current);
 
     // Skip thread hash
     const h = await s.hash.field.length.read(file);
@@ -166,12 +167,10 @@ export class Threads implements IThread {
 
     // Skip thread text
     const te = await s.text.field.length.read(file);
-    await file.seek(te.value, Current);
+    const replyCountOffset = await file.seek(te.value, Current);
 
-    // Update reply count
+    // Get reply count
     const l = await s.replies.length.read(file);
-    await file.seek(-l.bytesRead, Current);
-    await s.replies.length.write(l.value + 1, file);
 
     // Skip replies
     for (let i = 0; i < l.value; i++) {
@@ -182,12 +181,23 @@ export class Threads implements IThread {
       await file.seek(tl.value, Current);
     }
 
+    const modified = new Date();
+
     // Write reply
     await s.replies.field.write({
-      created: new Date(),
+      created: modified,
       hash,
       text: replyText,
     }, file);
+
+    // Update modtime
+    await file.seek(modtimeOffset, Start);
+    await s.modified.write(modified, file);
+
+    // Update reply count
+    await file.seek(replyCountOffset, Start);
+    await s.replies.length.write(l.value + 1, file);
+
     file.close();
   }
 }
