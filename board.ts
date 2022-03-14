@@ -114,7 +114,7 @@ export class Board {
     await this.db.post(id, text, await this.hash(`${id}:${ident}`));
     this.threadCache.delete(id);
     const idx = this.recentThreadCache.findIndex((x) => x.id === id);
-    if (this.recentThreadCache.length >= this.recentThreadMaxCount) this.recentThreadCache.splice(idx, 1);
+    if (idx !== -1) this.recentThreadCache.splice(idx, 1);
     this.recentThreadCache.unshift(await this.db.loadSummary(id));
   }
 }
