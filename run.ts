@@ -131,7 +131,7 @@ const server = serve(
 
       get("/" + boardName + "/thread/:id", async (ctx) => {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
-        if (id in cache) {
+        if (id in cache[boardName as BoardName]) {
           return ctx.render(cache[boardName as BoardName][id]).catch(
             logErr,
           );
