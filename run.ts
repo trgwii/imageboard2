@@ -194,6 +194,11 @@ const server = serve(
           return ctx.respond(
             JSON.stringify({
               ok: true,
+              board: {
+                name: boardName,
+                description: boardDescriptions[boardName as BoardName],
+                expiry: boardExpiry[boardName as BoardName],
+              },
               threads: await boards[boardName as BoardName]
                 .recentThreads(),
             }),

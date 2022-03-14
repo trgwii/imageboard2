@@ -332,9 +332,22 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["ok", "threads"],
+                  "required": ["ok", "board", "threads"],
                   "properties": {
                     "ok": { "type": "boolean", "enum": [true] },
+                    "board": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["name", "description", "expiry"],
+                      "properties": {
+                        "name": { "type": "string", "maxLength": 255 },
+                        "description": { "type": "string", "maxLength": 255 },
+                        "expiry": {
+                          "type": "integer",
+                          "description": "The number of seconds after the last reply until a thread in this board becomes expired"
+                        }
+                      }
+                    },
                     "threads": {
                       "type": "array",
                       "items": {
