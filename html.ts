@@ -68,6 +68,8 @@ export const CreateThreadForm = (board: string) =>
       { type: "submit" },
       img({
         src: "/icons/comments_add.png",
+        alt: "Create thread",
+        title: "Create thread",
         width: 32,
         height: 32,
         style: "image-rendering: pixelated",
@@ -91,6 +93,8 @@ export const ReplyToThreadForm = (id: number, board: string) =>
       { type: "submit" },
       img({
         src: "/icons/comment_add.png",
+        alt: "Reply to thread",
+        title: "Reply to thread",
         width: 32,
         height: 32,
         style: "image-rendering: pixelated",

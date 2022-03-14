@@ -21,6 +21,8 @@ const {
   a,
   article,
   body,
+  button,
+  img,
   br,
   h1,
   h2,
@@ -72,6 +74,21 @@ const server = serve(
   router(
     file(
       "image/png",
+      "/icons/page_code.png",
+      "public/icons/page_code.png",
+    ),
+    file(
+      "image/png",
+      "/icons/house.png",
+      "public/icons/house.png",
+    ),
+    file(
+      "image/png",
+      "/icons/arrow_left.png",
+      "public/icons/arrow_left.png",
+    ),
+    file(
+      "image/png",
       "/icons/comments_add.png",
       "public/icons/comments_add.png",
     ),
@@ -92,23 +109,60 @@ const server = serve(
     get("/", (ctx) =>
       ctx.render(Doc(
         "Thomas's Cool Forum Software",
-        h1("Thomas's Cool Forum Software"),
+        h1(
+          "Thomas's Cool Forum Software",
+          " ",
+          a(
+            { href: "/api/boards" },
+            button(img({
+              src: "/icons/page_code.png",
+              alt: "JSON API",
+              title: "JSON API",
+              width: 32,
+              height: 32,
+              style: "image-rendering: pixelated",
+            })),
+          ),
+        ),
         hr(),
         h2("Boards"),
         ...Object.keys(boards).flatMap((board) => [
           a(
-            { href: "/" + board + "/" },
-            board + " - " + boardDescriptions[board as BoardName],
+            { href: `/"${board}/` },
+            `${board} - ${boardDescriptions[board as BoardName]}`,
           ),
           br(),
         ]),
       )).catch(logErr)),
     ...Object.entries(boards).flatMap(([boardName, board]) => [
-      get("/" + boardName + "/", async (ctx) =>
+      get(`/${boardName}/`, async (ctx) =>
         ctx.render(Doc(
-          "Thomas's Cool Forum Software : " + boardName,
-          a({ href: "/" }, "Back to homepage"),
-          h1("Thomas's Cool Forum Software : " + boardName),
+          `Thomas's Cool Forum Software : ${boardName}`,
+          a(
+            { href: "/" },
+            button(img({
+              src: "/icons/house.png",
+              alt: "Back to homepage",
+              title: "Back to homepage",
+              width: 32,
+              height: 32,
+              style: "image-rendering: pixelated",
+            })),
+          ),
+          h1(
+            `Thomas's Cool Forum Software : ${boardName} `,
+            a(
+              { href: `/api/${boardName}/thread/recent` },
+              button(img({
+                src: "/icons/page_code.png",
+                alt: "JSON API",
+                title: "JSON API",
+                width: 32,
+                height: 32,
+                style: "image-rendering: pixelated",
+              })),
+            ),
+          ),
           h3(boardDescriptions[boardName as BoardName]),
           CreateThreadForm(boardName),
           ...(await board.recentThreads()).flatMap((x) => [
@@ -124,12 +178,12 @@ const server = serve(
               " | ",
               `${x.replies} replies`,
               br(),
-              a({ href: "/" + boardName + "/thread/" + x.id }, x.title),
+              a({ href: `/${boardName}/thread/${x.id}` }, x.title),
             ),
           ]),
         )).catch(logErr)),
 
-      get("/" + boardName + "/thread/:id", async (ctx) => {
+      get(`/${boardName}/thread/:id`, async (ctx) => {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
         if (id in cache[boardName as BoardName]) {
           return ctx.render(cache[boardName as BoardName][id]).catch(
@@ -146,10 +200,33 @@ const server = serve(
             modified,
           } = await board.getThread(id);
           const vdom = Doc(
-            "Thomas's Cool Forum Software - " + title,
+            `Thomas's Cool Forum Software - ${title}`,
             body(
-              a({ href: "/" + boardName + "/" }, "Back to board"),
-              h1(title),
+              a(
+                { href: `/${boardName}/` },
+                button(img({
+                  src: "/icons/arrow_left.png",
+                  alt: "Back to board",
+                  title: "Back to board",
+                  width: 32,
+                  height: 32,
+                  style: "image-rendering: pixelated",
+                })),
+              ),
+              h1(
+                `${title} `,
+                a(
+                  { href: `/api/${boardName}/thread/${id}` },
+                  button(img({
+                    src: "/icons/page_code.png",
+                    alt: "JSON API",
+                    title: "JSON API",
+                    width: 32,
+                    height: 32,
+                    style: "image-rendering: pixelated",
+                  })),
+                ),
+              ),
               h6(
                 created.toISOString()
                   .replace("T", " ").replace(/:\d{2}\..+/, ""),
