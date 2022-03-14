@@ -79,7 +79,12 @@ export class Threads implements IThread {
       mtime: (await s.modified.read(file)).value,
       hash: (await s.hash.read(file)).value,
       title: (await s.title.read(file)).value,
+      replies: 0,
     };
+    const { value: textSize } = await s.text.field.length.read(file);
+    await file.seek(textSize, Deno.SeekMode.Current);
+    const { value: replies } = await s.replies.length.read(file);
+    result.replies = replies;
     file.close();
     return result;
   }

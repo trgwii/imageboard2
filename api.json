@@ -33,7 +33,8 @@
                           "created",
                           "modified",
                           "hash",
-                          "title"
+                          "title",
+                          "replies"
                         ],
                         "properties": {
                           "id": {
@@ -49,7 +50,8 @@
                             "format": "date-time"
                           },
                           "hash": { "type": "string", "maxLength": 255 },
-                          "title": { "type": "string", "maxLength": 255 }
+                          "title": { "type": "string", "maxLength": 255 },
+                          "replies": { "type": "integer" }
                         }
                       }
                     }

@@ -36,6 +36,7 @@ export class Core {
     mtime: Date;
     hash: string;
     title: string;
+    replies: number;
   }[] = [];
   constructor(
     readonly threadCacheMaxSize: number,

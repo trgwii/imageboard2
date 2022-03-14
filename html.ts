@@ -37,6 +37,7 @@ export const Doc = (titleStr: string, ...children: HyperNodeish[]) =>
           rule("background-color", "#181a1b"),
           rule("color", "#e8e6e3"),
           rule("border-color", "#736b5e"),
+          rule("max-width", "100%"),
         ]),
         decl("a", [
           rule("color", "#3391ff"),

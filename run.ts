@@ -71,6 +71,8 @@ const server = serve(
               .replace("T", " ").replace(/:\d{2}\..+/, ""),
             " | ",
             x.hash,
+            " | ",
+            `${x.replies} replies`,
             br(),
             a({ href: "/thread/" + x.id }, x.title),
           ),
@@ -222,6 +224,7 @@ const server = serve(
               modified: t.mtime,
               hash: t.hash,
               title: t.title,
+              replies: t.replies,
             })),
           }),
           {
