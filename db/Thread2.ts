@@ -6,7 +6,7 @@ import { Optional } from "https://raw.githubusercontent.com/trgwii/RoryBufs/2780
 import { ArrayList } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/ArrayList.ts";
 import { Text } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/Text.ts";
 import { Struct } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/Struct.ts";
-import { IThread } from "./IThread0.d.ts";
+import { IThread } from "./IThread1.d.ts";
 export type { ValueFromSchema } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/utils.ts";
 
 export const ThreadBuf = new Buf({
@@ -75,8 +75,8 @@ export class Threads implements IThread {
     await file.seek(4, Current);
     const result = {
       id,
-      birthtime: (await s.created.read(file)).value,
-      mtime: (await s.modified.read(file)).value,
+      created: (await s.created.read(file)).value,
+      modified: (await s.modified.read(file)).value,
       hash: (await s.hash.read(file)).value,
       title: (await s.title.read(file)).value,
       replies: 0,
@@ -88,33 +88,30 @@ export class Threads implements IThread {
     file.close();
     return result;
   }
-  async recent(max: number) {
-    const recents: { id: number; mtime: number }[] = [];
+  async recent(max: number, recents: { id: number; modified: number }[] = []) {
     for await (const d of Deno.readDir(this.dir)) {
       const id = Number(d.name);
-      const mtime = (await this.lastModified(id)).getTime();
+      const modified = (await this.lastModified(id)).getTime();
       if (recents.length < max) {
         recents.push({
           id,
-          mtime,
+          modified,
         });
         continue;
       }
-      const oldestMtime = Math.min(...recents.map((x) => x.mtime));
-      if (mtime > oldestMtime) {
-        const oldestIdx = recents.findIndex((x) => x.mtime === oldestMtime);
+      const oldestMtime = Math.min(...recents.map((x) => x.modified));
+      if (modified > oldestMtime) {
+        const oldestIdx = recents.findIndex((x) => x.modified === oldestMtime);
         recents.splice(oldestIdx, 1);
-        recents.push({ id, mtime });
+        recents.push({ id, modified });
       }
     }
     const sorted = recents.sort((a, b) =>
-      a.mtime < b.mtime ? 1 : a.mtime > b.mtime ? -1 : 0
+      a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0
     );
     const ids = new Set<number>();
     return Promise.all(
-      sorted
-        .filter((r) => ids.has(r.id) ? false : (ids.add(r.id), true))
-        .map((r) => this.loadSummary(r.id)),
+      sorted.filter((r) => ids.has(r.id) ? false : (ids.add(r.id), true)),
     );
   }
   async create(title: string, text: string, hash: string) {

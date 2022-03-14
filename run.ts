@@ -64,10 +64,10 @@ const server = serve(
         ...(await core.recentThreads()).flatMap((x) => [
           hr(),
           p(
-            x.birthtime.toISOString()
+            x.created.toISOString()
               .replace("T", " ").replace(/:\d{2}\..+/, ""),
             " | ",
-            x.mtime.toISOString()
+            x.modified.toISOString()
               .replace("T", " ").replace(/:\d{2}\..+/, ""),
             " | ",
             x.hash,
@@ -218,14 +218,7 @@ const server = serve(
         return ctx.respond(
           JSON.stringify({
             ok: true,
-            threads: (await core.recentThreads()).map((t) => ({
-              id: t.id,
-              created: t.birthtime,
-              modified: t.mtime,
-              hash: t.hash,
-              title: t.title,
-              replies: t.replies,
-            })),
+            threads: await core.recentThreads(),
           }),
           {
             headers: {
