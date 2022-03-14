@@ -31,19 +31,27 @@ const {
   script,
 } = elements;
 
-const boards = {
-  main: new Board(20, 10, "main"),
-  dev: new Board(20, 20, "dev"),
-  shit: new Board(20, 5, "shit"),
+type BoardName = "main" | "dev" | "shit";
+
+const boardExpiry: Record<BoardName, number> = {
+  main: 7 * 24 * 60 * 60,
+  dev: 14 * 24 * 60 * 60,
+  shit: 24 * 60 * 60,
 };
 
-const boardDescriptions: Record<keyof typeof boards, string> = {
+const boards: Record<BoardName, Board> = {
+  main: new Board(20, 10, "main", boardExpiry.main),
+  dev: new Board(20, 20, "dev", boardExpiry.dev),
+  shit: new Board(20, 5, "shit", boardExpiry.shit),
+};
+
+const boardDescriptions: Record<BoardName, string> = {
   main: "Main board",
   dev: "Software & Engineering",
   shit: "Shitposting",
 };
 
-const cache: Record<keyof typeof boards, Record<number, HyperNode>> = {
+const cache: Record<BoardName, Record<number, HyperNode>> = {
   main: {},
   dev: {},
   shit: {},
@@ -90,7 +98,7 @@ const server = serve(
         ...Object.keys(boards).flatMap((board) => [
           a(
             { href: "/" + board + "/" },
-            board + " - " + boardDescriptions[board as keyof typeof boards],
+            board + " - " + boardDescriptions[board as BoardName],
           ),
           br(),
         ]),
@@ -101,7 +109,7 @@ const server = serve(
           "Thomas's Cool Forum Software : " + boardName,
           a({ href: "/" }, "Back to homepage"),
           h1("Thomas's Cool Forum Software : " + boardName),
-          h3(boardDescriptions[boardName as keyof typeof boards]),
+          h3(boardDescriptions[boardName as BoardName]),
           CreateThreadForm(boardName),
           ...(await board.recentThreads()).flatMap((x) => [
             hr(),
@@ -124,7 +132,7 @@ const server = serve(
       get("/" + boardName + "/thread/:id", async (ctx) => {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
         if (id in cache) {
-          return ctx.render(cache[boardName as keyof typeof boards][id]).catch(
+          return ctx.render(cache[boardName as BoardName][id]).catch(
             logErr,
           );
         }
@@ -162,11 +170,11 @@ const server = serve(
             ),
           );
           while (Object.keys(cache).length > 20) {
-            delete cache[boardName as keyof typeof boards][
+            delete cache[boardName as BoardName][
               Object.keys(cache)[0] as unknown as number
             ];
           }
-          cache[boardName as keyof typeof boards][id] = vdom;
+          cache[boardName as BoardName][id] = vdom;
           return ctx.render(vdom).catch(logErr);
         } catch (err) {
           return ctx.respond(err.message, { status: 400 }).catch(logErr);
@@ -186,7 +194,7 @@ const server = serve(
           return ctx.respond(
             JSON.stringify({
               ok: true,
-              threads: await boards[boardName as keyof typeof boards]
+              threads: await boards[boardName as BoardName]
                 .recentThreads(),
             }),
             {
@@ -215,7 +223,7 @@ const server = serve(
       get(`/api/${boardName}/thread/:id`, async (ctx) => {
         try {
           const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
-          const data = await boards[boardName as keyof typeof boards].getThread(
+          const data = await boards[boardName as BoardName].getThread(
             id,
           );
           return ctx.respond(
@@ -275,7 +283,7 @@ const server = serve(
           return ctx.respond(
             JSON.stringify({
               ok: true,
-              id: await boards[boardName as keyof typeof boards].createThread(
+              id: await boards[boardName as BoardName].createThread(
                 obj.title,
                 obj.text,
                 ctx.request.headers.get("X-Forwarded-For")!,
@@ -323,12 +331,12 @@ const server = serve(
           if (!("text" in obj) || typeof obj.text !== "string") {
             throw new Error("Bad text");
           }
-          await boards[boardName as keyof typeof boards].replyToThread(
+          await boards[boardName as BoardName].replyToThread(
             obj.id,
             obj.text,
             ctx.request.headers.get("X-Forwarded-For")!,
           );
-          delete cache[boardName as keyof typeof boards][obj.id];
+          delete cache[boardName as BoardName][obj.id];
           return ctx.respond(
             JSON.stringify({ ok: true }),
             {
@@ -384,7 +392,7 @@ const server = serve(
       const boardName = fd.get("board") ?? "main";
 
       try {
-        const id = await boards[boardName as keyof typeof boards].createThread(
+        const id = await boards[boardName as BoardName].createThread(
           title,
           text,
           ctx.request.headers.get("X-Forwarded-For")!,
@@ -421,12 +429,12 @@ const server = serve(
 
       try {
         console.log("thread post", id);
-        await boards[boardName as keyof typeof boards].replyToThread(
+        await boards[boardName as BoardName].replyToThread(
           id,
           text,
           ctx.request.headers.get("X-Forwarded-For")!,
         );
-        delete cache[boardName as keyof typeof boards][id];
+        delete cache[boardName as BoardName][id];
         return ctx.respond(
           new Response(null, {
             status: 302,
@@ -466,7 +474,8 @@ const server = serve(
             ok: true,
             boards: Object.keys(boards).map((name) => ({
               name,
-              description: boardDescriptions[name as keyof typeof boards],
+              description: boardDescriptions[name as BoardName],
+              expiry: boardExpiry[name as BoardName],
             })),
           }),
           {

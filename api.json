@@ -292,10 +292,14 @@
                       "items": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": ["name", "description"],
+                        "required": ["name", "description", "expiry"],
                         "properties": {
                           "name": { "type": "string", "maxLength": 255 },
-                          "description": { "type": "string", "maxLength": 255 }
+                          "description": { "type": "string", "maxLength": 255 },
+                          "expiry": {
+                            "type": "integer",
+                            "description": "The number of seconds after the last reply until a thread in this board becomes expired"
+                          }
                         }
                       }
                     }

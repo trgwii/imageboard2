@@ -42,6 +42,7 @@ export class Board {
     readonly threadCacheMaxSize: number,
     readonly recentThreadMaxCount: number,
     readonly name: string,
+    readonly secondsUntilExpiry: number,
   ) {
     this.db = new Threads(name);
   }
@@ -61,7 +62,7 @@ export class Board {
     if (Number.isNaN(id)) throw new Error("Missing thread");
     if (
       (await this.db.lastModified(id)).getTime() <
-        Date.now() - 7 * 24 * 60 * 60 * 1000
+        Date.now() - this.secondsUntilExpiry * 1000
     ) {
       throw new Error("Expired thread");
     }
