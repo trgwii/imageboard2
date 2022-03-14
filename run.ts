@@ -128,7 +128,7 @@ const server = serve(
         h2("Boards"),
         ...Object.keys(boards).flatMap((board) => [
           a(
-            { href: `/"${board}/` },
+            { href: `/${board}/` },
             `${board} - ${boardDescriptions[board as BoardName]}`,
           ),
           br(),
