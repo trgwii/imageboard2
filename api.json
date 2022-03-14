@@ -391,7 +391,7 @@
         }
       }
     },
-    "/api/{board}thread/{id}": {
+    "/api/{board}/thread/{id}": {
       "get": {
         "parameters": [
           {

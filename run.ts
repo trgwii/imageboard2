@@ -222,7 +222,7 @@ const server = serve(
       }),
       get(`/api/${boardName}/thread/:id`, async (ctx) => {
         try {
-          const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
+          const id = Number(new URL(ctx.request.url).pathname.split("/")[4]);
           const data = await boards[boardName as BoardName].getThread(
             id,
           );
