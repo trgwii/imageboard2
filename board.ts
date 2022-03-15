@@ -28,7 +28,7 @@ export class Board {
   readonly db: Threads;
   readonly threadCache = new Map<number, {
     cached: Date;
-    value: ValueFromSchema<typeof ThreadBuf.schema>;
+    value: ValueFromSchema<typeof ThreadBuf.struct.schema>;
   }>();
   readonly recentThreadCache: {
     id: number;

@@ -48,7 +48,7 @@ export class Threads implements IThread {
   async loadTitle(id: number) {
     await this.init;
     const file = await Deno.open(`${this.dir}/${id}`);
-    const s = ThreadBuf.schema;
+    const s = ThreadBuf.struct.schema;
     const offset = 4 + s.created.size + s.modified.size;
     await file.seek(offset, Current);
     const result = {
@@ -61,7 +61,7 @@ export class Threads implements IThread {
   async lastModified(id: number) {
     await this.init;
     const file = await Deno.open(`${this.dir}/${id}`);
-    const s = ThreadBuf.schema;
+    const s = ThreadBuf.struct.schema;
     const offset = 4 + s.created.size;
     await file.seek(offset, Current);
     const result = (await s.modified.read(file)).value;
@@ -70,7 +70,7 @@ export class Threads implements IThread {
   }
   async loadSummary(id: number) {
     await this.init;
-    const s = ThreadBuf.schema;
+    const s = ThreadBuf.struct.schema;
     const file = await Deno.open(`${this.dir}/${id}`);
     await file.seek(4, Current);
     const result = {
@@ -157,7 +157,7 @@ export class Threads implements IThread {
       throw new Error("bad text");
     }
     await this.init;
-    const s = ThreadBuf.schema;
+    const s = ThreadBuf.struct.schema;
     const file = await Deno.open(
       `${this.dir}/${id}`,
       { read: true, write: true },
