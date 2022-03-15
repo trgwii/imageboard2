@@ -104,7 +104,7 @@ export class Board {
     const id = await this.db.create(
       title,
       text,
-      await this.hash(`${this.db.id}:${ident}`),
+      await this.hash(`${this.name}:${this.db.id}:${ident}`),
     );
     if (this.recentThreadCache.length >= this.recentThreadMaxCount) {
       this.recentThreadCache.pop();
@@ -115,7 +115,11 @@ export class Board {
   async replyToThread(id: number, text: string, ident: string) {
     await this.assertThreadActive(id);
     if (await this.isThreadFull(id)) throw new Error("Thread is full");
-    await this.db.post(id, text, await this.hash(`${id}:${ident}`));
+    await this.db.post(
+      id,
+      text,
+      await this.hash(`${this.name}:${id}:${ident}`),
+    );
     this.threadCache.delete(id);
     const idx = this.recentThreadCache.findIndex((x) => x.id === id);
     if (idx !== -1) this.recentThreadCache.splice(idx, 1);
