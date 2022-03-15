@@ -22,7 +22,7 @@ export const ThreadBuf = new Buf({
   ),
 });
 
-const file = await Deno.open("boards/main/threads/v2/79", { read: true });
+const file = await Deno.open(Deno.args[0], { read: true });
 
 console.log(await ThreadBuf.read(file));
 
