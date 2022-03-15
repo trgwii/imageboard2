@@ -115,6 +115,8 @@ export class Threads implements IThread {
     );
   }
   async create(title: string, text: string, hash: string) {
+    if (title.length < 1) throw new Error("bad title");
+    if (text.length < 1) throw new Error("bad text");
     await this.init;
     const file = await Deno.open(
       `${this.dir}/${this.id}`,
@@ -144,6 +146,7 @@ export class Threads implements IThread {
     return result.value;
   }
   async post(id: number, replyText: string, hash: string) {
+    if (replyText.length < 1) throw new Error("bad text");
     await this.init;
     const s = ThreadBuf.schema;
     const file = await Deno.open(
