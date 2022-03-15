@@ -92,7 +92,9 @@ export class Board {
       0,
       Infinity,
       ...await Promise.all(
-        (await this.db.recent(this.recentThreadMaxCount)).map(({ id }) => this.db.loadSummary(id)),
+        (await this.db.recent(this.recentThreadMaxCount)).map(({ id }) =>
+          this.db.loadSummary(id)
+        ),
       ),
     );
     return this.recentThreadCache;
@@ -104,7 +106,9 @@ export class Board {
       text,
       await this.hash(`${this.db.id}:${ident}`),
     );
-    if (this.recentThreadCache.length >= this.recentThreadMaxCount) this.recentThreadCache.pop();
+    if (this.recentThreadCache.length >= this.recentThreadMaxCount) {
+      this.recentThreadCache.pop();
+    }
     this.recentThreadCache.unshift(await this.db.loadSummary(id));
     return id;
   }
