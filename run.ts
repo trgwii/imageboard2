@@ -33,30 +33,34 @@ const {
   script,
 } = elements;
 
-type BoardName = "main" | "dev" | "shit";
+type BoardName = "main" | "dev" | "shit" | "otter";
 
 const boardExpiry: Record<BoardName, number> = {
   main: 7 * 24 * 60 * 60,
   dev: 14 * 24 * 60 * 60,
   shit: 24 * 60 * 60,
+  otter: 14 * 24 * 60 * 60,
 };
 
 const boards: Record<BoardName, Board> = {
   main: new Board(20, 10, "main", boardExpiry.main),
   dev: new Board(20, 20, "dev", boardExpiry.dev),
   shit: new Board(20, 5, "shit", boardExpiry.shit),
+  otter: new Board(20, 20, "otter", boardExpiry.otter),
 };
 
 const boardDescriptions: Record<BoardName, string> = {
   main: "Main board",
   dev: "Software & Engineering",
   shit: "Shitposting",
+  otter: "Otters general",
 };
 
 const cache: Record<BoardName, Record<number, HyperNode>> = {
   main: {},
   dev: {},
   shit: {},
+  otter: {},
 };
 
 o += "\x63\x65\x6e";
