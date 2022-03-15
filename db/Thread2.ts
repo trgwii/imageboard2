@@ -1,13 +1,13 @@
-import { Buf } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/mod.ts";
-import { U8 } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/U8.ts";
-import { U16 } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/U16.ts";
-import { DateTime } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/DateTime.ts";
-import { Optional } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/Optional.ts";
-import { ArrayList } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/ArrayList.ts";
-import { Text } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/Text.ts";
-import { Struct } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/fields/Struct.ts";
+import { Buf } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/mod.ts";
+import { U8 } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/U8.ts";
+import { U16 } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/U16.ts";
+import { DateTime } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/DateTime.ts";
+import { Optional } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/Optional.ts";
+import { ArrayList } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/ArrayList.ts";
+import { Text } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/Text.ts";
+import { Struct } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/fields/Struct.ts";
 import { IThread } from "./IThread1.d.ts";
-export type { ValueFromSchema } from "https://raw.githubusercontent.com/trgwii/RoryBufs/27800e3f25ea9147b1d2fcfc06c3a61c13135271/ts/utils.ts";
+export type { ValueFromSchema } from "https://raw.githubusercontent.com/trgwii/RoryBufs/bdc60bc9e1d60c308ede6153a1c7854014b2c929/ts/utils.ts";
 
 export const ThreadBuf = new Buf({
   created: new DateTime(),
