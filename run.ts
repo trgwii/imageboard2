@@ -194,6 +194,7 @@ const server = serve(
       get(`/${boardName}/thread/:id`, async (ctx) => {
         const id = Number(new URL(ctx.request.url).pathname.split("/")[3]);
         if (id in cache[boardName as BoardName]) {
+          await board.assertThreadActive(id);
           return ctx.render(cache[boardName as BoardName][id]).catch(
             logErr,
           );
