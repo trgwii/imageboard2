@@ -31,6 +31,7 @@ const {
   hr,
   p,
   script,
+  span,
 } = elements;
 
 type BoardName = "main" | "dev" | "shit" | "otter" | "math";
@@ -185,8 +186,13 @@ const server = serve(
               x.hash,
               " | ",
               `${x.replies} replies`,
+              ...x.expired
+                ? [" | ", span({ style: "color: red" }, "expired")]
+                : [],
               br(),
-              a({ href: `/${boardName}/thread/${x.id}` }, x.title),
+              x.expired
+                ? x.title
+                : a({ href: `/${boardName}/thread/${x.id}` }, x.title),
             ),
           ]),
         )).catch(logErr)),
