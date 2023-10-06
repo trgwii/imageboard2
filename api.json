@@ -359,7 +359,8 @@
                           "modified",
                           "hash",
                           "title",
-                          "replies"
+                          "replies",
+                          "expired"
                         ],
                         "properties": {
                           "id": {
@@ -376,7 +377,8 @@
                           },
                           "hash": { "type": "string", "maxLength": 255 },
                           "title": { "type": "string", "maxLength": 255 },
-                          "replies": { "type": "integer" }
+                          "replies": { "type": "integer" },
+                          "expired": { "type": "boolean" }
                         }
                       }
                     }

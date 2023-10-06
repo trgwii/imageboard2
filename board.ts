@@ -67,6 +67,14 @@ export class Board {
       throw new Error("Expired thread");
     }
   }
+  async isThreadExpired(id: number) {
+    try {
+      await this.assertThreadActive(id);
+      return false;
+    } catch {
+      return true;
+    }
+  }
   async isThreadFull(id: number) {
     return (await this.db.size(id)) > 1024 * 1024;
   }
@@ -87,17 +95,21 @@ export class Board {
     return thread;
   }
   async recentThreads() {
-    if (this.recentThreadCache.length > 0) return this.recentThreadCache;
-    this.recentThreadCache.splice(
-      0,
-      Infinity,
-      ...await Promise.all(
-        (await this.db.recent(this.recentThreadMaxCount)).map(({ id }) =>
-          this.db.loadSummary(id)
+    if (this.recentThreadCache.length === 0) {
+      this.recentThreadCache.splice(
+        0,
+        Infinity,
+        ...await Promise.all(
+          (await this.db.recent(this.recentThreadMaxCount)).map(({ id }) =>
+            this.db.loadSummary(id)
+          ),
         ),
-      ),
-    );
-    return this.recentThreadCache;
+      );
+    }
+    return await Promise.all(this.recentThreadCache.map(async (x) => ({
+      ...x,
+      expired: await this.isThreadExpired(x.id),
+    })));
   }
 
   async createThread(title: string, text: string, ident: string) {
